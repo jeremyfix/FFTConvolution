@@ -1,13 +1,10 @@
 // // Compute a 2D FFT with GSL
-// Compile with g++ -o fft_gsl fft_gsl.cpp -O3 `pkg-config --libs --cflags gsl`
+// Compile with g++ -o fft_gsl fft_gsl.cc -O3 `pkg-config --libs --cflags gsl`
 
 #include <iostream>
 #include <cstdio>
 #include <cmath>
 #include <cassert>
-
-// To Load an image
-#include "CImg.h"
 
 // To use the GSL FFT
 #include <gsl/gsl_blas.h>

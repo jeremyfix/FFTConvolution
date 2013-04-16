@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cassert>
 #include <cstdlib>
+#include <iostream>
 #include <algorithm>
 
 typedef enum
@@ -198,6 +199,12 @@ void print_tab(double * tab, int width, int height)
 
 int main(int argc, char * argv[])
 {
+  if(argc != 3)
+    {
+      std::cerr << "Usage : " << argv[0] << " <source_size> <kernel_size>" << std::endl;
+      return -1;
+    }
+
     int Ns = atoi(argv[1]);
     int Nk = atoi(argv[2]);
 

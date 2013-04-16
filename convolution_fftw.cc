@@ -4,6 +4,7 @@
 #include <fftw3.h>
 #include <cmath>
 #include <cstdlib>
+#include <iostream>
 #include <algorithm>
 
 // ******************** Begin of factorization code ***********************//
@@ -353,6 +354,12 @@ void fftw_convolve(FFTW_Workspace &ws, double * src,double * kernel)
 
 int main(int argc, char * argv[])
 {
+  if(argc != 3)
+    {
+      std::cerr << "Usage : " << argv[0] << " <source_size> <kernel_size>" << std::endl;
+      return -1;
+    }
+
   int Ns = atoi(argv[1]);
   int Nk = atoi(argv[2]);
 
