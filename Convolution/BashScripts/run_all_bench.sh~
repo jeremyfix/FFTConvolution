@@ -1,3 +1,0 @@
-#/bin/bash
-echo "Running linear convolution GSL"
-./run_linear_gsl.sh
