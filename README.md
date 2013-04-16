@@ -20,7 +20,7 @@ bounded) number of zeros. The trick is just to add some more 0's to
 get a size that can be decomposed.
 
 
-A description of the convolution products with the FFT is given in the file FFTConvolution.pdf .
+A description of the convolution products with the FFT is given in the file [FFTConvolution.pdf](FFTConvolution.pdf).
 
 
 The provided scripts are :
