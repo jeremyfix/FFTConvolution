@@ -35,7 +35,10 @@ void compute_fft_gsl(gsl_matrix * src, gsl_matrix * dst)
     // Copy the real part and let the imaginary part to 0
     // The GSL works in place, directly on the dst matrix
     gsl_matrix_set_zero(dst);
-    gsl_vector_memcpy(&gsl_vector_view_array_with_stride(dst->data,2,height * width).vector, &gsl_vector_view_array(src->data,width*height).vector);
+    gsl_vector_view xv, yv;
+    xv = gsl_vector_view_array_with_stride(dst->data,2,height * width);
+    yv = gsl_vector_view_array(src->data,width*height);
+    gsl_vector_memcpy(&xv.vector, &yv.vector);
 
     int i, j;
     for(i = 0 ; i < height ; ++i)
