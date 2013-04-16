@@ -1,0 +1,27 @@
+FIT_LIMIT=1e-15
+FIT_MAXITER=100
+h(x,y) = a * x**b * y**c
+a = 5*1e-9
+b = 2.0
+c = 2.0
+
+set title 'Standard Linear convolution'
+set xlabel "Image size"
+set ylabel "Kernel size"
+set key below
+
+print "Fitting the linear convolution"
+pause -1 "(->return)"
+splot 'benchmarks_std_convolution.txt' using 1:2:3, h(x,y)
+pause -1 "(-> return)"
+fit h(x,y) 'benchmarks_std_convolution.txt' using 1:2:3:(1) via a,c
+splot 'benchmarks_std_convolution.txt' using 1:2:3, h(x,y)
+pause -1 "(-> return)"
+
+print "Fitting the circular convolution"
+pause -1 "(->return)"
+splot 'benchmarks_std_convolution.txt' using 1:2:4, h(x,y)
+pause -1 "(-> return)"
+fit h(x,y) 'benchmarks_std_convolution.txt' using 1:2:4:(1) via a,b,c
+splot 'benchmarks_std_convolution.txt' using 1:2:4, h(x,y)
+pause -1 "(-> return)"

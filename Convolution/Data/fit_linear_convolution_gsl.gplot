@@ -1,0 +1,28 @@
+FIT_LIMIT=1e-15
+FIT_MAXITER=100
+h(x,y) = a * x * log(x) + b*x*x
+a = 1e-9
+b = 1e-9
+
+set title 'Standard Linear convolution'
+set xlabel "Image size"
+set ylabel "Kernel size"
+set key below
+
+print "Fitting the linear convolution"
+pause -1 "(->return)"
+splot '../Data/benchmarks_LinearConvolution_gsl.txt' using 1:2:3, h(x,y)
+pause -1 "(-> return)"
+fit h(x,y) '../Data/benchmarks_LinearConvolution_gsl.txt' using 1:2:3:(1) via a,b
+splot '../Data/benchmarks_LinearConvolution_gsl.txt' using 1:2:3, h(x,y)
+pause -1 "(-> return)"
+
+a = 5*1e-9
+b = 1e-9
+print "Fitting the circular convolution"
+pause -1 "(->return)"
+splot '../Data/benchmarks_LinearConvolution_gsl.txt' using 1:2:4, h(x,y)
+pause -1 "(-> return)"
+fit h(x,y) '../Data/benchmarks_LinearConvolution_gsl.txt' using 1:2:4:(1) via a,b
+splot '../Data/benchmarks_LinearConvolution_gsl.txt' using 1:2:4, h(x,y)
+pause -1 "(-> return)"

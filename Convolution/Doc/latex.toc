@@ -1,0 +1,23 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}
+\contentsline {subsection}{\numberline {1.1}Convolution product : linear and circular}{2}{subsection.1.1}
+\contentsline {subsubsection}{\numberline {1.1.1}Definition}{2}{subsubsection.1.1.1}
+\contentsline {subsubsection}{\numberline {1.1.2}Computational complexity}{3}{subsubsection.1.1.2}
+\contentsline {subsection}{\numberline {1.2}Discrete Fourier Transform}{6}{subsection.1.2}
+\contentsline {subsubsection}{\numberline {1.2.1}Introduction}{6}{subsubsection.1.2.1}
+\contentsline {subsubsection}{\numberline {1.2.2}Computing a 2D Fourier transform from 1D Fourier transforms}{7}{subsubsection.1.2.2}
+\contentsline {subsubsection}{\numberline {1.2.3}Computing 2 DFT at once}{8}{subsubsection.1.2.3}
+\contentsline {subsubsection}{\numberline {1.2.4}Fast Fourier Transform}{9}{subsubsection.1.2.4}
+\contentsline {subsubsection}{\numberline {1.2.5}Computational complexity}{9}{subsubsection.1.2.5}
+\contentsline {section}{\numberline {2}2D Convolution product using the Discrete Fourier Transform}{11}{section.2}
+\contentsline {subsection}{\numberline {2.1}Introduction}{11}{subsection.2.1}
+\contentsline {subsubsection}{\numberline {2.1.1}Convolution theorem : circular convolution and fourier transform}{11}{subsubsection.2.1.1}
+\contentsline {subsubsection}{\numberline {2.1.2}Circular convolution of signals of different sizes}{12}{subsubsection.2.1.2}
+\contentsline {subsubsection}{\numberline {2.1.3}Circular convolution : summary}{13}{subsubsection.2.1.3}
+\contentsline {subsubsection}{\numberline {2.1.4}Linear convolutions : particular cases of circular convolution}{13}{subsubsection.2.1.4}
+\contentsline {subsection}{\numberline {2.2}Speeding-up by padding}{14}{subsection.2.2}
+\contentsline {subsubsection}{\numberline {2.2.1}Linear convolution}{14}{subsubsection.2.2.1}
+\contentsline {subsubsection}{\numberline {2.2.2}Circular convolution}{15}{subsubsection.2.2.2}
+\contentsline {subsection}{\numberline {2.3}Comparison between FFT based and standard convolution}{18}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Putting everything together: 2D image Convolution using the FFT}{18}{subsection.2.4}
+\contentsline {section}{\numberline {3}C++ Implementations}{19}{section.3}
+\contentsline {section}{\numberline {4}References}{20}{section.4}
