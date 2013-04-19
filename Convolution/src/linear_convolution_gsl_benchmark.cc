@@ -6,14 +6,15 @@
 #include <string>
 #include <fstream>
 
-#define VERBOSE false
-#define SAVE_RESULTS true
+#define VERBOSE true
+#define SAVE_RESULTS false
 
 // To measure the execution time
 #include <sys/time.h>
 
 // The code for the convolutions
 #include "convolution_gsl.h"
+using namespace GSL_Convolution;
 
 #define NB_REPETITIONS 20
 
@@ -27,10 +28,8 @@ int main(int argc, char * argv[])
     {
         printf("Usage : linear_convolution_gsl_benchmark <img_size> <kernel_size>\n");
         printf(" It performs a linear convolution using : \n");
-        printf(" 1 - Nested for loops \n");
-        printf(" 2 - The GSL without padding \n");
-        printf(" 3 - The gsl with padding \n");
-        printf(" 4 - The two previous versions with a small kernel of size 3x3\n");
+        printf(" 1 - The GSL without padding \n");
+        printf(" 2 - The gsl with padding \n");
         return -1;
     }
 
@@ -65,10 +64,15 @@ int main(int argc, char * argv[])
     // And compute the linear convolution
     if(VERBOSE) printf("Execution times : \n");
 
+    // Initialize the workspace for performing the convolution
+    // This workspace can be kept until the size of the
+    // image changes
+    Workspace ws;
+    init_workspace(ws, LINEAR, h_src, w_src, h_kernel, w_kernel);
+
     gettimeofday(&before, NULL);
-    /*for(int i = 0 ; i < NB_REPETITIONS ; ++i)
-        linear_convolution_fft_gsl(src, kernel, dst);
-    */
+    for(int i = 0 ; i < NB_REPETITIONS ; ++i)
+      linear_convolution(ws, src, kernel, dst);
     gettimeofday(&after, NULL);
     sbefore = before.tv_sec + before.tv_usec * 1E-6;
     safter =after.tv_sec + after.tv_usec * 1E-6;
@@ -76,10 +80,13 @@ int main(int argc, char * argv[])
     if(VERBOSE) printf("Unpadded GSL : %e s. \n", total/NB_REPETITIONS);
     if(SAVE_RESULTS) results << total/NB_REPETITIONS << " ";
 
+    // Update the mode of the convolution
+    update_workspace(ws, LINEAR_OPTIMAL, h_src, w_src, h_kernel, w_kernel);
+
     // And compute the linear convolution with an optimal size
     gettimeofday(&before, NULL);
     for(int i = 0 ; i < NB_REPETITIONS ; ++i)
-        linear_convolution_fft_gsl_optimal(src, kernel, dst_optimal);
+      linear_convolution_optimal(ws, src, kernel, dst_optimal);
     gettimeofday(&after, NULL);
     sbefore = before.tv_sec + before.tv_usec * 1E-6;
     safter =after.tv_sec + after.tv_usec * 1E-6;
@@ -95,4 +102,6 @@ int main(int argc, char * argv[])
     gsl_matrix_free(kernel);
     gsl_matrix_free(dst);
     gsl_matrix_free(dst_optimal);
+
+    clear_workspace(ws);
 }
