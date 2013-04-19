@@ -15,6 +15,7 @@
 
 // The code for the convolution
 #include "convolution_fftw.h"
+using namespace FFTW_Convolution;
 
 #define NB_REPETITIONS 20
 
@@ -27,7 +28,9 @@ int main(int argc, char * argv[])
     if(argc != 3)
     {
         printf("Usage : circular_convolution_fftw_benchmark <img_size> <kernel_size>\n");
-        printf(" Performs a 2D circular convolution using FFTW3 \n");
+        printf(" Performs a 2D circular convolution using FFTW3 and                 \n");
+	printf("  1 - The FFTW without padding                                      \n");
+	printf("  2 - The FFTW with padding                                         \n");
         return -1;
     }
 
@@ -65,14 +68,12 @@ int main(int argc, char * argv[])
     // Initialize the workspace for performing the convolution
     // This workspace can be kept until the size of the
     // image changes
-    FFTW_Workspace ws;
-    init_workspace_fftw(ws,         FFTW_CIRCULAR,         h_src, w_src, h_kernel, w_kernel);
-    FFTW_Workspace ws_optimal;
-    init_workspace_fftw(ws_optimal, FFTW_CIRCULAR_OPTIMAL, h_src, w_src, h_kernel, w_kernel);
+    Workspace ws;
+    init_workspace(ws,         CIRCULAR,         h_src, w_src, h_kernel, w_kernel);
 
     gettimeofday(&before, NULL);
     for(int i = 0 ; i < NB_REPETITIONS ; ++i)
-        circular_convolution_fft_fftw(ws, src, h_src, w_src, kernel, h_kernel, w_kernel, dst);
+        convolve(ws, src, kernel, dst);
     gettimeofday(&after, NULL);
     sbefore = before.tv_sec + before.tv_usec * 1E-6;
     safter =after.tv_sec + after.tv_usec * 1E-6;
@@ -80,10 +81,13 @@ int main(int argc, char * argv[])
     if(VERBOSE) printf("Unpadded FFTW : %e s. \n", total/NB_REPETITIONS);
     if(SAVE_RESULTS) results << total/NB_REPETITIONS << " ";
 
+    // Update the convolution mode
+    update_workspace(ws, CIRCULAR_OPTIMAL, h_src, w_src, h_kernel, w_kernel);
+
     // And compute the circular convolution with an optimal size
     gettimeofday(&before, NULL);
     for(int i = 0 ; i < NB_REPETITIONS ; ++i)
-        circular_convolution_fft_fftw_optimal(ws_optimal, src, h_src, w_src, kernel, h_kernel, w_kernel, dst_optimal);
+        convolve(ws, src, kernel, dst_optimal);
     gettimeofday(&after, NULL);
     sbefore = before.tv_sec + before.tv_usec * 1E-6;
     safter =after.tv_sec + after.tv_usec * 1E-6;
@@ -98,6 +102,5 @@ int main(int argc, char * argv[])
     delete[] dst;
     delete[] dst_optimal;
 
-    clear_workspace_fftw(ws);
-    clear_workspace_fftw(ws_optimal);
+    clear_workspace(ws);
 }

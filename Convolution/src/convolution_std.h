@@ -3,16 +3,6 @@
 
 #include <cmath>
 
-#ifndef max_func
-#define max_func
-inline double max(double a, double b) { return a > b ? a : b ; }
-#endif
-
-#ifndef min_func
-#define min_func
-inline double min(double a, double b) { return a < b ? a : b ; }
-#endif
-
 /***********************************/
 /* Standard circular convolution   */
 /***********************************/
@@ -66,13 +56,13 @@ void std_linear_convolution(double * src, int h_src, int w_src, double * kernel,
     // For each pixel in the dest image
     for (i = 0 ; i < h_src ; i++)
     {
-        low_k = max(0, i - int((h_kernel-1)/2));
-        high_k = min(h_src-1, i + int(h_kernel/2));
+        low_k = std::max(0, i - int((h_kernel-1)/2));
+        high_k = std::min(h_src-1, i + int(h_kernel/2));
 
         for (j = 0 ; j  < w_src ; j++)
         {
-            low_l = max(0, j - int((w_kernel-1)/2));
-            high_l = min(w_src-1, j + int(w_kernel/2));
+            low_l = std::max(0, j - int((w_kernel-1)/2));
+            high_l = std::min(w_src-1, j + int(w_kernel/2));
             temp = 0.0;
             // We browse the kernel
             for (k = low_k ; k <= high_k ; k++)

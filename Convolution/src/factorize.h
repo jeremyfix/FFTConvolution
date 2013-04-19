@@ -1,16 +1,6 @@
 #ifndef FACTORIZE_H
 #define FACTORIZE_H
 
-#ifndef max_func
-#define max_func
-inline double max(double a, double b) { return a > b ? a : b ; }
-#endif
-
-#ifndef min_func
-#define min_func
-inline double min(double a, double b) { return a < b ? a : b ; }
-#endif
-
 // Code adapted from gsl/fft/factorize.c
 void factorize (const int n,
                 int *n_factors,

@@ -1,12 +1,3 @@
-INCLUDE_PATH = \
-	-I/usr/include \
-	-I/usr/local/include \
-	-I.
-LIBS_PATH = \
-	-L/lib \
-	-L/usr/lib \
-	-L/usr/local/lib
-
 LIBS    = $(LIBS_PATH) -lm 
 CFLAGS  = -O3 $(INCLUDE_PATH) 
 
