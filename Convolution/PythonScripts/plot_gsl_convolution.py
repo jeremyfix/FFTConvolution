@@ -16,17 +16,45 @@ data_circular = data_circular.reshape(data_circular.shape[1:]) # drop the useles
 data_circular_optimal = np.array(data[np.where(data[:,0] == 'circular_optimal'),1:], dtype=np.float)
 data_circular_optimal = data_circular_optimal.reshape(data_circular_optimal.shape[1:]) # drop the useless mode dimension
 
-fig = plt.figure()
+min_src = data_linear[:,0].min()
+max_src = data_linear[:,0].max()
+min_kernel = data_linear[:,1].min()
+max_kernel = data_linear[:,1].max()
+
+X,Y = np.meshgrid(np.arange(min_src, max_src+1),
+                  np.arange(min_kernel, max_kernel+1))
+Z_linear = np.NaN * np.zeros(X.shape)
+Z_linear_optimal = np.NaN * np.zeros(X.shape)
+for d in data_linear:
+    Z_linear[d[1]-min_kernel, d[0]-min_src] = d[2]
+for d in data_linear_optimal:
+    Z_linear_optimal[d[1]-min_kernel, d[0]-min_src] = d[2]
+
+Z_circular = np.NaN * np.zeros(X.shape)
+Z_circular_optimal = np.NaN * np.zeros(X.shape)
+for d in data_circular:
+    Z_circular[d[1]-min_kernel, d[0]-min_src] = d[2]
+for d in data_circular_optimal:
+    Z_circular_optimal[d[1]-min_kernel, d[0]-min_src] = d[2]
+
+fig =plt.figure(figsize=(15,5))
 ax = fig.add_subplot(121, projection='3d')
-ax.scatter(data_linear[:,0], data_linear[:,1], data_linear[:,2], c='b')
-ax.scatter(data_linear_optimal[:,0], data_linear_optimal[:,1], data_linear_optimal[:,2], c='r')
+ax.plot_wireframe(X, Y, Z_linear, color='b', alpha=0.4)
+ax.plot_wireframe(X, Y, Z_linear_optimal, color='r')
+ax.set_xlabel('Source size (N)')
+ax.set_ylabel('Kernel size (k)')
+ax.set_zlabel('Time (s.)')
+ax.set_title('Linear convolution of a source NxN with a kernel kxk')
 
 ax = fig.add_subplot(122, projection='3d')
-ax.scatter(data_circular[:,0], data_circular[:,1], data_circular[:,2], c='b')
-ax.scatter(data_circular_optimal[:,0], data_circular_optimal[:,1], data_circular_optimal[:,2], c='r')
+ax.plot_wireframe(X, Y, Z_circular, color='b', alpha=0.4)
+ax.plot_wireframe(X, Y, Z_circular_optimal, color='r')
+ax.set_xlabel('Source size (N)')
+ax.set_ylabel('Kernel size (k)')
+ax.set_zlabel('Time (s.)')
+ax.set_title('Circular convolution of a source NxN with a kernel kxk')
 
 plt.show()
-
 
 ######################################## Get a fit of the performances
 # Fit the execution times
