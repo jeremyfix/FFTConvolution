@@ -1,0 +1,6 @@
+
+# Fits the results 
+
+# Make a surf plot of the ratios of fftw, gsl, std
+in order to illustate the benefits from using these implementations
+
