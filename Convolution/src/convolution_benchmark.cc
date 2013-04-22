@@ -55,12 +55,18 @@ using namespace STD_Convolution;
 #elif MODE==1
 #define MODE_STR "linear_optimal"
 #define CONVOLUTION_MODE LINEAR_OPTIMAL
+#if CONVOLUTION==2
+#error There is no linear_optimal convolution for std_convolution .. it is just linear
+#endif
 #elif MODE==2
 #define MODE_STR "circular"
 #define CONVOLUTION_MODE CIRCULAR
 #elif MODE==3
 #define MODE_STR "circular_optimal"
 #define CONVOLUTION_MODE CIRCULAR_OPTIMAL
+#if CONVOLUTION==2
+#error There is no circular_optimal convolution for std_convolution .. it is just circular
+#endif
 #endif
 
 

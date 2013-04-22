@@ -5,7 +5,7 @@ from matplotlib.colors import colorConverter
 from pylab import *
 from scipy.optimize import fmin
 
-data = np.loadtxt('../Data/benchmarks_std_convolution.txt')
+data = np.loadtxt('../Data/benchmarks_convolution_std.txt')
 
 # Fit the execution times
 #def f_lin(x):

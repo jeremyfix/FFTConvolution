@@ -2,7 +2,7 @@
 
 rm ../Data/benchmarks_convolution_gsl.txt
 
-MAX_SIZE=20
+MAX_SIZE=100
 
 cd ../bin
 echo "Running convolution_gsl_benchmark_linear.bin"

@@ -9,7 +9,6 @@ BINS = \
 	factors.bin\
 	fft_fftw.bin\
 	fft_gsl.bin\
-	std_convolution.bin\
 	convolution_gsl_benchmark_linear.bin\
 	convolution_gsl_benchmark_linear_optimal.bin\
 	convolution_gsl_benchmark_circular.bin\

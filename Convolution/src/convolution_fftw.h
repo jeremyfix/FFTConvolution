@@ -52,8 +52,8 @@ namespace FFTW_Convolution
       case CIRCULAR:
 	// Circular convolution
 	assert(h_kernel <= h_src && w_kernel <= w_src);
-	ws.h_fftw = h_src;
-	ws.w_fftw = w_src;
+	ws.h_fftw = h_src + h_kernel;
+	ws.w_fftw = w_src + w_kernel;
 	break;
       case CIRCULAR_OPTIMAL:
 	// Cicular convolution with optimal sizes
