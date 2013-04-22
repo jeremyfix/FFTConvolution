@@ -17,7 +17,9 @@ BINS = \
 	convolution_fftw_benchmark_linear.bin\
 	convolution_fftw_benchmark_linear_optimal.bin\
 	convolution_fftw_benchmark_circular.bin\
-	convolution_fftw_benchmark_circular_optimal.bin
+	convolution_fftw_benchmark_circular_optimal.bin\
+	convolution_std_benchmark_linear.bin\
+	convolution_std_benchmark_circular.bin
 
 all: $(BINS)
 
@@ -26,6 +28,17 @@ all: $(BINS)
 
 convolution_bin:
 	g++ -o $(BIN_PATH)/$(TARGET) convolution_benchmark.cc -DVERBOSE=true -DSAVE_RESULTS=true -DCONVOLUTION=$(CONVOLUTION) -DMODE=$(MODE) -O3 -Wall `pkg-config --libs --cflags gsl fftw3`
+
+
+convolution_fftw_benchmark_linear.bin: convolution_benchmark.cc
+	make convolution_bin CONVOLUTION=0 MODE=0 TARGET=$@ 
+convolution_fftw_benchmark_linear_optimal.bin: convolution_benchmark.cc
+	make convolution_bin CONVOLUTION=0 MODE=1 TARGET=$@ 
+convolution_fftw_benchmark_circular.bin: convolution_benchmark.cc
+	make convolution_bin CONVOLUTION=0 MODE=2 TARGET=$@ 
+convolution_fftw_benchmark_circular_optimal.bin: convolution_benchmark.cc
+	make convolution_bin CONVOLUTION=0 MODE=3 TARGET=$@ 
+
 
 convolution_gsl_benchmark_linear.bin: convolution_benchmark.cc
 	make convolution_bin CONVOLUTION=1 MODE=0 TARGET=$@ 
@@ -36,14 +49,11 @@ convolution_gsl_benchmark_circular.bin: convolution_benchmark.cc
 convolution_gsl_benchmark_circular_optimal.bin: convolution_benchmark.cc
 	make convolution_bin CONVOLUTION=1 MODE=3 TARGET=$@ 
 
-convolution_fftw_benchmark_linear.bin: convolution_benchmark.cc
-	make convolution_bin CONVOLUTION=0 MODE=0 TARGET=$@ 
-convolution_fftw_benchmark_linear_optimal.bin: convolution_benchmark.cc
-	make convolution_bin CONVOLUTION=0 MODE=1 TARGET=$@ 
-convolution_fftw_benchmark_circular.bin: convolution_benchmark.cc
-	make convolution_bin CONVOLUTION=0 MODE=2 TARGET=$@ 
-convolution_fftw_benchmark_circular_optimal.bin: convolution_benchmark.cc
-	make convolution_bin CONVOLUTION=0 MODE=3 TARGET=$@ 
+
+convolution_std_benchmark_linear.bin: convolution_benchmark.cc
+	make convolution_bin CONVOLUTION=2 MODE=0 TARGET=$@ 
+convolution_std_benchmark_circular.bin: convolution_benchmark.cc
+	make convolution_bin CONVOLUTION=2 MODE=2 TARGET=$@ 
 
 clean : 
 	rm -f *.o *~ *.bak 
