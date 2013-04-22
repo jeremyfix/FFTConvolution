@@ -72,7 +72,7 @@ bool is_optimal(int n, int * implemented_factors)
     if(n % 4*4*4*2 == 0)
         return false;
 
-    int nf;
+    int nf=0;
     int factors[64];
     int i = 0;
     factorize(n, &nf, factors,implemented_factors);

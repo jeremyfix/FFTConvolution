@@ -9,7 +9,6 @@
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_fft_complex.h>
 
-
 namespace GSL_Convolution 
 {
 
@@ -253,7 +252,7 @@ namespace GSL_Convolution
   /* Circular convolution with GSL   */
   /*********************************/
 
-  void circular_convolution(gsl_matrix * src, gsl_matrix * kernel, gsl_matrix * dst)
+  void circular_convolution(Workspace ws, gsl_matrix * src, gsl_matrix * kernel, gsl_matrix * dst)
   {
     assert(kernel->size1 <= src->size1 && kernel->size2 <= src->size2 && dst->size1 == src->size1 && dst->size2 == dst->size2);
 
@@ -374,7 +373,7 @@ namespace GSL_Convolution
   /* Circular convolution with GSL with an optimal size   */
   /******************************************************/
 
-  void circular_convolution_optimal(gsl_matrix * src, gsl_matrix * kernel, gsl_matrix * dst)
+  void circular_convolution_optimal(Workspace ws, gsl_matrix * src, gsl_matrix * kernel, gsl_matrix * dst)
   {
     // In order to optimze the size for a circular convolution
     // it is sufficient to remind that a circular convolution is the restriction to the central part
@@ -508,42 +507,32 @@ namespace GSL_Convolution
     gsl_matrix_free(fft_copy);
   }
 
-  void circular_convolution_fft_gsl_combined(gsl_matrix * src, gsl_matrix * kernel, gsl_matrix * dst)
-  {
-    if(is_optimal(src->size1, GSL_FACTORS) && is_optimal(src->size2,GSL_FACTORS))
-      circular_convolution(src,kernel,dst);
-    else
-      circular_convolution_optimal(src,kernel,dst);
-  }
-
-
-  ////////////////// ICI !!!
-
 void convolve(Workspace &ws, double * src, double * kernel, double * dst)
   {
+    gsl_matrix_view src_view = gsl_matrix_view_array(src, ws.h_src, ws.w_src);
+    gsl_matrix_view kernel_view = gsl_matrix_view_array(kernel, ws.h_kernel, ws.w_kernel);
+    gsl_matrix_view dst_view = gsl_matrix_view_array(dst, ws.h_src, ws.w_src);
+    
     switch(ws.mode)
       {
       case LINEAR:
-	gsl_matrix_view src_view = gsl_matrix_view_array(src, ws.h_src, ws.w_src);
-	gsl_matrix_view kernel_view = gsl_matrix_view_array(kernel, ws.h_kernel, ws.w_kernel);
-	gsl_matrix_view dst_view = gsl_matrix_view_array(dst, ws.h_src, ws.w_src);
-	linear_convolution(ws, src, kernel, dst);
+	linear_convolution(ws, &src_view.matrix, &kernel_view.matrix, &dst_view.matrix);
 	break;
       case LINEAR_OPTIMAL:
-	linear_convolution_optimal(ws, src, kernel, dst);
+	linear_convolution_optimal(ws, &src_view.matrix, &kernel_view.matrix, &dst_view.matrix);
 	break;
       case CIRCULAR:
-	circular_convolution(ws, src, kernel, dst);
+	circular_convolution(ws, &src_view.matrix, &kernel_view.matrix, &dst_view.matrix);
 	break;
       case CIRCULAR_OPTIMAL:
-	circular_convolution_optimal(ws, src, kernel, dst);
+	circular_convolution_optimal(ws, &src_view.matrix, &kernel_view.matrix, &dst_view.matrix);
 	break;
       default:
 	printf("Unrecognized convolution mode, possible modes are :\n");
-	printf("   - FFTW_LINEAR \n");
-	printf("   - FFTW_LINEAR_OPTIMAL \n");
-	printf("   - FFTW_CIRCULAR \n");
-	printf("   - FFTW_CIRCULAR_OPTIMAL\n");
+	printf("   - LINEAR \n");
+	printf("   - LINEAR_OPTIMAL \n");
+	printf("   - CIRCULAR \n");
+	printf("   - CIRCULAR_OPTIMAL\n");
 	// TODO EXCEPTION
       }
   }

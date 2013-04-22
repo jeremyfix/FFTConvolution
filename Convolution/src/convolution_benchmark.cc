@@ -1,11 +1,16 @@
 // Compilation with :
-// g++ -o convolution_benchmark convolution_benchmark.cc -DVERBOSE=true -DSAVE_RESULTS=false -DCONVOLUTION=fftw -DMODE=linear -O3 -Wall `pkg-config --libs --cflags gsl fftw3`
+// g++ -o convolution_benchmark convolution_benchmark.cc -DVERBOSE=true -DSAVE_RESULTS=false -DCONVOLUTION=0 -DMODE=0 -O3 -Wall `pkg-config --libs --cflags gsl fftw3`
 // Modes :
-// - LINEAR, LINEAR_OPTIMAL, CIRCULAR, CIRCULAR_OPTIMAL
+// - 0 : LINEAR, 
+// - 1 : LINEAR_OPTIMAL, 
+// - 2 : CIRCULAR, 
+// - 3 : CIRCULAR_OPTIMAL
 // Convolution:
-// - fftw, gsl, std
+// - 0 : fftw, 
+// - 1 : gsl, 
+// - 2 : std
 
-// Using -DCONVOLUTION=std , only the linear and circular modes are available
+// Using -DCONVOLUTION=2 , only the linear and circular modes are available, compilation should complain otherwise
 
 #include <iostream>
 #include <cstdio>
@@ -25,17 +30,17 @@
 #define SAVE_RESULTS false
 #endif
 
-#if CONVOLUTION==fftw
+#if CONVOLUTION==0
 #include "convolution_fftw.h"
 using namespace FFTW_Convolution;
 #define filename_results "../Data/benchmarks_convolution_fftw.txt"
 
-#elif CONVOLUTION==gsl
+#elif CONVOLUTION==1
 #include "convolution_gsl.h"
-using namespace FFTW_Convolution;
+using namespace GSL_Convolution;
 #define filename_results "../Data/benchmarks_convolution_gsl.txt"
 
-#elif CONVOLUTION==std
+#elif CONVOLUTION==2
 #include "convolution_std.h"
 using namespace STD_Convolution;
 #define filename_results "../Data/benchmarks_convolution_std.txt"
@@ -44,14 +49,18 @@ using namespace STD_Convolution;
 # error Unrecognized convolution type!
 #endif
 
-#if MODE==LINEAR
+#if MODE==0
 #define MODE_STR "linear"
-#elif MODE==LINEAR_OPTIMAL
+#define CONVOLUTION_MODE LINEAR
+#elif MODE==1
 #define MODE_STR "linear_optimal"
-#elif MODE==CIRCULAR
+#define CONVOLUTION_MODE LINEAR_OPTIMAL
+#elif MODE==2
 #define MODE_STR "circular"
-#elif MODE==CIRCULAR_OPTIMAL
+#define CONVOLUTION_MODE CIRCULAR
+#elif MODE==3
 #define MODE_STR "circular_optimal"
+#define CONVOLUTION_MODE CIRCULAR_OPTIMAL
 #endif
 
 
@@ -106,7 +115,7 @@ int main(int argc, char * argv[])
     // This workspace can be kept until the size of the
     // image changes
     Workspace ws;
-    init_workspace(ws, MODE, h_src, w_src, h_kernel, w_kernel);
+    init_workspace(ws, CONVOLUTION_MODE, h_src, w_src, h_kernel, w_kernel);
 
     gettimeofday(&before, NULL);
     // The main loop

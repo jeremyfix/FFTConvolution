@@ -3,11 +3,9 @@
 
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>
 #include <cmath>
 #include <cassert>
-
-// To Load an image
-#include "CImg.h"
 
 // To use FFTW3
 #include <fftw3.h>

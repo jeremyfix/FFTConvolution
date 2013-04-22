@@ -406,14 +406,13 @@ namespace FFTW_Convolution
 	break;
       default:
 	printf("Unrecognized convolution mode, possible modes are :\n");
-	printf("   - FFTW_LINEAR \n");
-	printf("   - FFTW_LINEAR_OPTIMAL \n");
-	printf("   - FFTW_CIRCULAR \n");
-	printf("   - FFTW_CIRCULAR_OPTIMAL\n");
+	printf("   - LINEAR \n");
+	printf("   - LINEAR_OPTIMAL \n");
+	printf("   - CIRCULAR \n");
+	printf("   - CIRCULAR_OPTIMAL\n");
 	// TODO EXCEPTION
       }
   }
-
 }
 
 #endif

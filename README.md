@@ -1,6 +1,11 @@
 FFTConvolution
 ==============
 
+Work in progress :
+
+I'm currently rewriting some of the codes to ease running the benchmarks and using the library.
+
+
 Some C++ codes for computing a 1D and 2D convolution product using the FFT implemented with the GSL or FFTW
 
 The scripts provide some examples for computing various convolutions

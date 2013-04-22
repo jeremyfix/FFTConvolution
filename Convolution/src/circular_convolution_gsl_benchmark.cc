@@ -1,23 +1,17 @@
 #include <iostream>
 #include <cstdio>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_fft_complex.h>
-#include <gsl/gsl_fft_real.h>
-#include <gsl/gsl_fft_halfcomplex.h>
+#include <cstdlib>
 #include <cmath>
 #include <cassert>
-
 #include <string>
 #include <fstream>
 
 // The code for the convolution
 #include "convolution_gsl.h"
+using namespace GSL_Convolution;
 
-#define VERBOSE false
-#define SAVE_RESULTS true
+#define VERBOSE true
+#define SAVE_RESULTS false
 
 // To measure the execution time
 #include <sys/time.h>
@@ -69,10 +63,15 @@ int main(int argc, char * argv[])
     // And compute the circular convolution
     if(VERBOSE) printf("Execution times : \n");
 
+    // Initialize the workspace for performing the convolution
+    // This workspace can be kept until the size of the
+    // image changes
+    Workspace ws;
+    init_workspace(ws, LINEAR, h_src, w_src, h_kernel, w_kernel);
+
     gettimeofday(&before, NULL);
-    /*for(int i = 0 ; i < NB_REPETITIONS ; ++i)
-        circular_convolution_fft_gsl(src, kernel, dst);
-    */
+    for(int i = 0 ; i < NB_REPETITIONS ; ++i)
+      circular_convolution(ws, src, kernel, dst);
     gettimeofday(&after, NULL);
     sbefore = before.tv_sec + before.tv_usec * 1E-6;
     safter =after.tv_sec + after.tv_usec * 1E-6;
@@ -83,28 +82,13 @@ int main(int argc, char * argv[])
     // And compute the circular convolution with an optimal size
     gettimeofday(&before, NULL);
     for(int i = 0 ; i < NB_REPETITIONS ; ++i)
-        circular_convolution_fft_gsl_optimal(src, kernel, dst_optimal);
+      circular_convolution_optimal(ws, src, kernel, dst_optimal);
     gettimeofday(&after, NULL);
     sbefore = before.tv_sec + before.tv_usec * 1E-6;
     safter =after.tv_sec + after.tv_usec * 1E-6;
     total = safter - sbefore;
     if(VERBOSE) printf("Padded GSL : %e s. \n", total/NB_REPETITIONS);
     if(SAVE_RESULTS) results << total/NB_REPETITIONS << " ";
-
-    // And compute the circular convolution combining the two previous
-    // computations with the following rule :
-    // Don't use padding when the size is optimal
-    // Use padding otherwise
-    gettimeofday(&before, NULL);
-    for(int i = 0 ; i < NB_REPETITIONS ; ++i)
-        circular_convolution_fft_gsl_combined(src, kernel, dst_combined);
-    gettimeofday(&after, NULL);
-    sbefore = before.tv_sec + before.tv_usec * 1E-6;
-    safter =after.tv_sec + after.tv_usec * 1E-6;
-    total = safter - sbefore;
-    if(VERBOSE) printf("Combined GSL : %e s. \n", total/NB_REPETITIONS);
-    if(SAVE_RESULTS) results << total/NB_REPETITIONS << " ";
-
 
     if(SAVE_RESULTS) results << std::endl;
 
@@ -114,4 +98,6 @@ int main(int argc, char * argv[])
     gsl_matrix_free(dst);
     gsl_matrix_free(dst_optimal);
     gsl_matrix_free(dst_combined);
+
+    clear_workspace(ws);
 }
