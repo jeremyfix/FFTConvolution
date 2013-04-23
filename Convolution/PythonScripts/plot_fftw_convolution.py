@@ -54,24 +54,45 @@ ax.set_ylabel('Kernel size (k)')
 ax.set_zlabel('Time (s.)')
 ax.set_title('Circular convolution of a source NxN with a kernel kxk')
 
-plt.show()
 
 
 ######################################## Get a fit of the performances
-# Fit the execution times
+# Fit the execution times on the optimal convolutions, they are smoother
 
-# def f_lin(x):
-#     global data
-#     return np.sum((x[0] * (data[:,0]**2 * data[:,1]**2 -data[:,1]**2/4.0 + data[:,1]/4.0)- data[:,2])**2)
-# xopt_lin = fmin(f_lin, [1e-8], xtol=1e-10)
-# print xopt_lin
+# Temps : Nlog(N)
 
-# def f_circ(x):
-#     global data
-#     return np.sum((x[0] * data[:,0]**x[1] * data[:,1]**x[2] - data[:,3])**2)
-# xopt_circ = fmin(f_circ, [1e-9,2.0,2.0], xtol=1e-8)
-# print xopt_circ
+def f_lin(x):
+    return np.sum(((x[0] * (data_linear_optimal[:,0]**2+data_linear_optimal[:,1]**2/4.0) * np.log(data_linear_optimal[:,0]+data_linear_optimal[:,1]/2.0)) - data_linear_optimal[:,2])**2)
+xopt_lin = fmin(f_lin, [1e-7], xtol=1e-10)
+print xopt_lin
+
+def f_circ(x):
+    return np.sum(((x[0] * (data_circular_optimal[:,0]**2+data_circular_optimal[:,1]**2) * np.log(data_circular_optimal[:,0]+data_circular_optimal[:,1])) - data_circular_optimal[:,2])**2)
+xopt_circ = fmin(f_circ, [1e-7], xtol=1e-8)
+print xopt_circ
 ######################################## 
 
+Z_linear_optimal_fit = xopt_lin[0] * ((X**2+Y**2/4.0) * np.log(X+Y/2.0))
+Z_circular_optimal_fit = xopt_circ[0] * ((X**2+Y**2) * np.log(X+Y))
+
+fig2 = plt.figure()
+ax1 = fig2.add_subplot(121, projection='3d')
+ax1.plot_wireframe(X, Y, Z_linear_optimal, color='r')
+ax1.plot_wireframe(X, Y, Z_linear_optimal_fit, color='b', alpha=0.1)
+
+ax1.set_xlabel('Source size (N)')
+ax1.set_ylabel('Kernel size (k)')
+ax1.set_zlabel('Time (s.)')
+ax1.set_title('Linear convolution of a source NxN with a kernel kxk')
 
 
+ax2 = fig2.add_subplot(122, projection='3d')
+ax2.plot_wireframe(X, Y, Z_circular_optimal, color='r')
+ax2.plot_wireframe(X, Y, Z_circular_optimal_fit, color='b', alpha=0.1)
+
+ax2.set_xlabel('Source size (N)')
+ax2.set_ylabel('Kernel size (k)')
+ax2.set_zlabel('Time (s.)')
+ax2.set_title('Circular convolution of a source NxN with a kernel kxk')
+
+plt.show()
