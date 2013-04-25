@@ -62,18 +62,18 @@ ax.set_title('Circular convolution of a source NxN with a kernel kxk')
 # Temps : Nlog(N)
 
 def f_lin(x):
-    return np.sum(((x[0] * (data_linear_optimal[:,0]**2+data_linear_optimal[:,1]**2/4.0) * np.log(data_linear_optimal[:,0]+data_linear_optimal[:,1]/2.0)) - data_linear_optimal[:,2])**2)
+    return np.sum(((x[0] * (data_linear_optimal[:,0]+data_linear_optimal[:,1]/2.0)**2 * np.log(data_linear_optimal[:,0]+data_linear_optimal[:,1]/2.0)) - data_linear_optimal[:,2])**2)
 xopt_lin = fmin(f_lin, [1e-7], xtol=1e-10)
 print xopt_lin
 
 def f_circ(x):
-    return np.sum(((x[0] * (data_circular_optimal[:,0]**2+data_circular_optimal[:,1]**2) * np.log(data_circular_optimal[:,0]+data_circular_optimal[:,1])) - data_circular_optimal[:,2])**2)
+    return np.sum(((x[0] * (data_circular_optimal[:,0]+data_circular_optimal[:,1])**2 * np.log(data_circular_optimal[:,0]+data_circular_optimal[:,1])) - data_circular_optimal[:,2])**2)
 xopt_circ = fmin(f_circ, [1e-7], xtol=1e-8)
 print xopt_circ
 ######################################## 
 
-Z_linear_optimal_fit = xopt_lin[0] * ((X**2+Y**2/4.0) * np.log(X+Y/2.0))
-Z_circular_optimal_fit = xopt_circ[0] * ((X**2+Y**2) * np.log(X+Y))
+Z_linear_optimal_fit = xopt_lin[0] * ((X+Y/2.0)**2 * np.log(X+Y/2.0))
+Z_circular_optimal_fit = xopt_circ[0] * ((X+Y)**2 * np.log(X+Y))
 
 fig2 = plt.figure()
 ax1 = fig2.add_subplot(121, projection='3d')

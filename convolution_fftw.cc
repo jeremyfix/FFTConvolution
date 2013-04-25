@@ -393,7 +393,7 @@ int main(int argc, char * argv[])
   for(int i =0 ; i < Nk-1 ; ++i)
     printf("%f,", kernel[i]);
   printf("%f];", kernel[Nk-1]);
-  printf("conv(f,g,'full')\n");
+  printf("convn(f,g,'full')\n");
 
   clear_workspace_fftw(ws);
 
@@ -417,7 +417,7 @@ int main(int argc, char * argv[])
   for(int i =0 ; i < Nk-1 ; ++i)
     printf("%f,", kernel[i]);
   printf("%f];", kernel[Nk-1]);
-  printf("conv(f,g,'same')\n");
+  printf("convn(f,g,'same')\n");
 
   clear_workspace_fftw(ws);
 
@@ -441,7 +441,7 @@ int main(int argc, char * argv[])
   for(int i =0 ; i < Nk-1 ; ++i)
     printf("%f,", kernel[i]);
   printf("%f];", kernel[Nk-1]);
-  printf("conv(f,g,'valid')\n");
+  printf("convn(f,g,'valid')\n");
 
   clear_workspace_fftw(ws);
 

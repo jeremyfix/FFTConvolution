@@ -51,19 +51,19 @@ using namespace STD_Convolution;
 
 #if MODE==0
 #define MODE_STR "linear"
-#define CONVOLUTION_MODE LINEAR
+#define CONVOLUTION_MODE LINEAR_SAME_UNPADDED
 #elif MODE==1
 #define MODE_STR "linear_optimal"
-#define CONVOLUTION_MODE LINEAR_OPTIMAL
+#define CONVOLUTION_MODE LINEAR_SAME
 #if CONVOLUTION==2
 #error There is no linear_optimal convolution for std_convolution .. it is just linear
 #endif
 #elif MODE==2
 #define MODE_STR "circular"
-#define CONVOLUTION_MODE CIRCULAR
+#define CONVOLUTION_MODE CIRCULAR_SAME
 #elif MODE==3
 #define MODE_STR "circular_optimal"
-#define CONVOLUTION_MODE CIRCULAR_OPTIMAL
+#define CONVOLUTION_MODE CIRCULAR_SAME_PADDED
 #if CONVOLUTION==2
 #error There is no circular_optimal convolution for std_convolution .. it is just circular
 #endif
@@ -112,7 +112,7 @@ int main(int argc, char * argv[])
         for(int j = 0 ; j < w_kernel ; ++j)
             kernel[i*w_kernel+j] = rand()/double(RAND_MAX);
 
-    double * dst = new double[h_src*w_src];
+    //double * dst = new double[h_src*w_src];
 
     // And compute the linear convolution
     if(VERBOSE) printf("Execution times : \n");
@@ -126,7 +126,7 @@ int main(int argc, char * argv[])
     gettimeofday(&before, NULL);
     // The main loop
     for(int i = 0 ; i < NB_REPETITIONS ; ++i)
-      convolve(ws, src, kernel, dst);
+      convolve(ws, src, kernel);
     //
     gettimeofday(&after, NULL);
     sbefore = before.tv_sec + before.tv_usec * 1E-6;
@@ -138,7 +138,7 @@ int main(int argc, char * argv[])
 
     // Clean up
     delete[] src;
-    delete[] dst;
+    //delete[] dst;
     delete[] kernel;
 
     clear_workspace(ws);

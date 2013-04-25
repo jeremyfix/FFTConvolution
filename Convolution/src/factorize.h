@@ -1,6 +1,8 @@
 #ifndef FACTORIZE_H
 #define FACTORIZE_H
 
+#include <iostream>
+
 // Code adapted from gsl/fft/factorize.c
 void factorize (const int n,
                 int *n_factors,

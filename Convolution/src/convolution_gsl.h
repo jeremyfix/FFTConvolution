@@ -16,10 +16,13 @@ namespace GSL_Convolution
 
   typedef enum
   {
-    LINEAR,
-    LINEAR_OPTIMAL,
-    CIRCULAR,
-    CIRCULAR_OPTIMAL
+    INVALID_MODE, // in case the workspace is not properly initialized with init_workspace(..)
+    LINEAR_FULL,
+    LINEAR_SAME,
+    LINEAR_VALID,
+    LINEAR_SAME_UNPADDED,
+    CIRCULAR_SAME,
+    CIRCULAR_SAME_PADDED
   } GSL_Convolution_Mode;
     
   typedef struct Workspace
@@ -27,9 +30,12 @@ namespace GSL_Convolution
     gsl_fft_complex_workspace *ws_column, *ws_line;
     gsl_fft_complex_wavetable *wv_column, *wv_line;
     int h_src, w_src, h_kernel, w_kernel;
-    int h_res, w_res;
+    int h_fft, w_fft;
     gsl_matrix * fft, *fft_copy;
     GSL_Convolution_Mode mode;
+    double * dst; // The array containing the result
+    int h_dst; // its height
+    int w_dst; // its width
   } Workspace;
 
   void init_workspace(Workspace & ws, GSL_Convolution_Mode mode, int h_src, int w_src, int h_kernel, int w_kernel)
@@ -42,33 +48,78 @@ namespace GSL_Convolution
 
     switch(mode)
       {
-      case LINEAR:
-	ws.h_res = h_src + int((h_kernel+1)/2);
-	ws.w_res = w_src + int((w_kernel+1)/2);
+      case LINEAR_FULL:
+	// Full Linear convolution
+	ws.h_fft = find_closest_factor(h_src + h_kernel - 1,GSL_FACTORS);
+	ws.w_fft = find_closest_factor(w_src + w_kernel - 1,GSL_FACTORS);
+	ws.h_dst = h_src + h_kernel-1;
+	ws.w_dst = w_src + w_kernel-1;
 	break;
-      case LINEAR_OPTIMAL:
-	ws.h_res = find_closest_factor(h_src + int(h_kernel+1)/2, GSL_FACTORS);
-	ws.w_res = find_closest_factor(w_src + int(w_kernel+1)/2, GSL_FACTORS);
+      case LINEAR_SAME:
+	// Same Linear convolution
+	ws.h_fft = find_closest_factor(h_src + int(h_kernel/2.0),GSL_FACTORS);
+	ws.w_fft = find_closest_factor(w_src + int(w_kernel/2.0),GSL_FACTORS);
+	ws.h_dst = h_src;
+	ws.w_dst = w_src;
 	break;
-      case CIRCULAR:
-	ws.h_res = ws.h_src + ws.h_kernel;
-	ws.w_res = ws.w_src + ws.w_kernel;
+      case LINEAR_VALID:
+	// Valid Linear convolution
+	if(ws.h_kernel > ws.h_src || ws.w_kernel > ws.w_src)
+	  {
+	    printf("Warning : The 'valid' convolution results in an empty matrix\n");
+	    ws.h_fft = 0;
+	    ws.w_fft = 0;
+	    ws.h_dst = 0;
+	    ws.w_dst = 0;
+	  }
+	else
+	  {
+	    ws.h_fft = find_closest_factor(h_src, GSL_FACTORS);
+	    ws.w_fft = find_closest_factor(w_src, GSL_FACTORS);
+	    ws.h_dst = h_src - h_kernel+1;
+	    ws.w_dst = w_src - w_kernel+1;
+	  }
+	break;	
+      case LINEAR_SAME_UNPADDED:
+	// Linear convolution with optimal sizes
+	ws.h_fft = find_closest_factor(h_src + int(h_kernel/2.0),GSL_FACTORS);
+	ws.w_fft = find_closest_factor(w_src + int(w_kernel/2.0),GSL_FACTORS);
+	ws.h_dst = h_src;
+	ws.w_dst = w_src;
 	break;
-      case CIRCULAR_OPTIMAL:
-	ws.h_res = find_closest_factor(ws.h_src + ws.h_kernel, GSL_FACTORS);
-	ws.w_res = find_closest_factor(ws.w_src + ws.w_kernel, GSL_FACTORS);
+      case CIRCULAR_SAME:
+	// Circular convolution
+	ws.h_fft = h_src;
+	ws.w_fft = w_src;
+	ws.h_dst = h_src;
+	ws.w_dst = w_src;
 	break;
+      case CIRCULAR_SAME_PADDED:
+	// Cicular convolution with optimal sizes
+	ws.h_fft = find_closest_factor(h_src+h_kernel, GSL_FACTORS);
+	ws.w_fft = find_closest_factor(w_src+w_kernel, GSL_FACTORS);
+	break;
+      default:
+	printf("Unrecognized convolution mode, possible modes are :\n");
+	printf("   - LINEAR_FULL \n");
+	printf("   - LINEAR_SAME \n");
+	printf("   - LINEAR_VALID \n");
+	printf("   - LINEAR_SAME_UNPADDED \n");
+	printf("   - CIRCULAR_SAME \n");
+	printf("   - CIRCULAR_SAME_PADDED\n");
+	// TODO EXCEPTION
       }
 
     // We need to create a matrix holding 2 times the number of coefficients of src for the real and imaginary parts
-    ws.fft = gsl_matrix_alloc(ws.h_res, 2*ws.w_res);
-    ws.fft_copy = gsl_matrix_alloc(ws.h_res, 2*ws.w_res);
+    ws.fft = gsl_matrix_alloc(ws.h_fft, 2*ws.w_fft);
+    ws.fft_copy = gsl_matrix_alloc(ws.h_fft, 2*ws.w_fft);
 
-    ws.ws_column = gsl_fft_complex_workspace_alloc(ws.h_res);
-    ws.ws_line = gsl_fft_complex_workspace_alloc(ws.w_res);
-    ws.wv_column = gsl_fft_complex_wavetable_alloc(ws.h_res);
-    ws.wv_line = gsl_fft_complex_wavetable_alloc(ws.w_res);
+    ws.ws_column = gsl_fft_complex_workspace_alloc(ws.h_fft);
+    ws.ws_line = gsl_fft_complex_workspace_alloc(ws.w_fft);
+    ws.wv_column = gsl_fft_complex_wavetable_alloc(ws.h_fft);
+    ws.wv_line = gsl_fft_complex_wavetable_alloc(ws.w_fft);
 
+    ws.dst = new double[ws.h_dst * ws.w_dst];
   }
 
   void clear_workspace(Workspace & ws)
@@ -80,6 +131,8 @@ namespace GSL_Convolution
 
     gsl_matrix_free(ws.fft);
     gsl_matrix_free(ws.fft_copy);
+
+    delete[] ws.dst;
   }
 
   void update_workspace(Workspace & ws, GSL_Convolution_Mode mode, int h_src, int w_src, int h_kernel, int w_kernel)
@@ -99,7 +152,7 @@ namespace GSL_Convolution
     // memcpy takes care of the strides,
     for(unsigned int i = 0 ; i < ws.h_src ; ++i)
       for(unsigned int j = 0 ; j < ws.w_src ; ++j)
-	ws.fft->data[i*2*ws.w_res + 2*j] = src->data[i*ws.w_src + j];
+	ws.fft->data[i*2*ws.w_fft + 2*j] = src->data[i*ws.w_src + j];
 
     // when zero-padding, we must ensure that the center of the kernel
     // is copied on the corners of the padded image
@@ -107,57 +160,57 @@ namespace GSL_Convolution
       {
 	i_src = i - int(ws.h_kernel/2);
 	if(i_src < 0)
-	  i_src += ws.h_res;
+	  i_src += ws.h_fft;
 
 	for(int j = 0 ; j < ws.w_kernel ; ++j)
 	  {
 	    j_src = j - int(ws.w_kernel/2);
 	    if(j_src < 0)
-	      j_src += ws.w_res;
-	    ws.fft->data[i_src * 2*ws.w_res + 2*j_src+1] = kernel->data[i*ws.w_kernel + j];
+	      j_src += ws.w_fft;
+	    ws.fft->data[i_src * 2*ws.w_fft + 2*j_src+1] = kernel->data[i*ws.w_kernel + j];
 	  }
       }
 
     // We compute the 2 forward DFT at once
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
 	// Apply the FFT on the line i
-	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_res],1, ws.w_res, ws.wv_line, ws.ws_line);
+	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
       }
-    for(int j = 0 ; j < ws.w_res ; ++j)
+    for(int j = 0 ; j < ws.w_fft ; ++j)
       {
 	// Apply the FFT on the column j
-	gsl_fft_complex_forward (&ws.fft->data[2*j], ws.w_res, ws.h_res, ws.wv_column, ws.ws_column);
+	gsl_fft_complex_forward (&ws.fft->data[2*j], ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
       }
 
     // Their element-wise product : be carefull, the matrices hold complex numbers !
     // We need a copy of fft to perform the product properly
     double re_h, im_h, re_hs, im_hs;
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
-	for(int j = 0 ; j < ws.w_res ; ++j)
+	for(int j = 0 ; j < ws.w_fft ; ++j)
 	  {
-	    re_h = ws.fft->data[i*2*ws.w_res + 2*j];
-	    im_h = ws.fft->data[i*2*ws.w_res + 2*j+1];
-	    re_hs = ws.fft->data[((ws.h_res-i)%ws.h_res)*2*ws.w_res + ((2*ws.w_res-2*j)%(2*ws.w_res))];
-	    im_hs = -ws.fft->data[((ws.h_res-i)%ws.h_res)*2*ws.w_res + ((2*ws.w_res-2*j)%(2*ws.w_res))+1];
+	    re_h = ws.fft->data[i*2*ws.w_fft + 2*j];
+	    im_h = ws.fft->data[i*2*ws.w_fft + 2*j+1];
+	    re_hs = ws.fft->data[((ws.h_fft-i)%ws.h_fft)*2*ws.w_fft + ((2*ws.w_fft-2*j)%(2*ws.w_fft))];
+	    im_hs = -ws.fft->data[((ws.h_fft-i)%ws.h_fft)*2*ws.w_fft + ((2*ws.w_fft-2*j)%(2*ws.w_fft))+1];
 
-	    ws.fft_copy->data[i*2*ws.w_res+2*j] = 0.5*(re_h*im_h - re_hs*im_hs);
-	    ws.fft_copy->data[i*2*ws.w_res+2*j+1] = -0.25*(re_h*re_h - im_h * im_h - re_hs * re_hs + im_hs * im_hs);
+	    ws.fft_copy->data[i*2*ws.w_fft+2*j] = 0.5*(re_h*im_h - re_hs*im_hs);
+	    ws.fft_copy->data[i*2*ws.w_fft+2*j+1] = -0.25*(re_h*re_h - im_h * im_h - re_hs * re_hs + im_hs * im_hs);
 	  }
       }
 
     // And the inverse FFT, which is done in the similar way as before
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
 	// Apply the FFT^{-1} on the line i
-	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_res],1, ws.w_res, ws.wv_line, ws.ws_line);
+	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
       }
 
-    for(int j = 0 ; j < ws.w_res ; ++j)
+    for(int j = 0 ; j < ws.w_fft ; ++j)
       {
 	// Apply the FFT^{-1} on the column j
-	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j], ws.w_res, ws.h_res, ws.wv_column, ws.ws_column);
+	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j], ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
       }
 
     // And copy only the real part of fft_src in dst
@@ -165,7 +218,7 @@ namespace GSL_Convolution
       {
 	for(int j = 0 ; j < ws.w_src ; ++j)
 	  {
-	    dst->data[i*ws.w_src + j] = ws.fft_copy->data[i*2*ws.w_res+2*j];
+	    dst->data[i*ws.w_src + j] = ws.fft_copy->data[i*2*ws.w_fft+2*j];
 	  }
       }
   }
@@ -180,7 +233,7 @@ namespace GSL_Convolution
     gsl_matrix_set_zero(ws.fft);
     for(unsigned int i = 0 ; i < ws.h_src ; ++i)
       for(unsigned int j = 0 ; j < ws.w_src ; ++j)
-	ws.fft->data[i*2*ws.w_res + 2*j] = src->data[i*ws.w_src + j];
+	ws.fft->data[i*2*ws.w_fft + 2*j] = src->data[i*ws.w_src + j];
 
     // when zero-padding, we must ensure that the center of the kernel
     // is copied on the corners of the padded image
@@ -188,57 +241,57 @@ namespace GSL_Convolution
       {
 	i_src = i - int(ws.h_kernel/2);
 	if(i_src < 0)
-	  i_src += ws.h_res;
+	  i_src += ws.h_fft;
 
 	for(int j = 0 ; j < ws.w_kernel ; ++j)
 	  {
 	    j_src = j - int(ws.w_kernel/2);
 	    if(j_src < 0)
-	      j_src += ws.w_res;
-	    ws.fft->data[i_src * 2*ws.w_res + 2*j_src+1] = kernel->data[i * ws.w_kernel + j];
+	      j_src += ws.w_fft;
+	    ws.fft->data[i_src * 2*ws.w_fft + 2*j_src+1] = kernel->data[i * ws.w_kernel + j];
 	  }
       }
 
     // We compute the 2 forward DFT at once
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
 	// Apply the FFT on the line i
-	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_res],1, ws.w_res, ws.wv_line, ws.ws_line);
+	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
       }
-    for(int j = 0 ; j < ws.w_res ; ++j)
+    for(int j = 0 ; j < ws.w_fft ; ++j)
       {
 	// Apply the FFT on the column j
-	gsl_fft_complex_forward (&ws.fft->data[2*j], ws.w_res, ws.h_res, ws.wv_column, ws.ws_column);
+	gsl_fft_complex_forward (&ws.fft->data[2*j], ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
       }
 
     // Their element-wise product : be carefull, the matrices hold complex numbers !
     // We need a copy of fft to perform the product properly
     double re_h, im_h, re_hs, im_hs;
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
-	for(int j = 0 ; j < ws.w_res ; ++j)
+	for(int j = 0 ; j < ws.w_fft ; ++j)
 	  {
-	    re_h = ws.fft->data[i*2*ws.w_res + 2*j];
-	    im_h = ws.fft->data[i*2*ws.w_res + 2*j+1];
-	    re_hs = ws.fft->data[((ws.h_res-i)%ws.h_res)*2*ws.w_res + ((2*ws.w_res-2*j)%(2*ws.w_res))];
-	    im_hs = -ws.fft->data[((ws.h_res-i)%ws.h_res)*2*ws.w_res + ((2*ws.w_res-2*j)%(2*ws.w_res))+1];
+	    re_h = ws.fft->data[i*2*ws.w_fft + 2*j];
+	    im_h = ws.fft->data[i*2*ws.w_fft + 2*j+1];
+	    re_hs = ws.fft->data[((ws.h_fft-i)%ws.h_fft)*2*ws.w_fft + ((2*ws.w_fft-2*j)%(2*ws.w_fft))];
+	    im_hs = -ws.fft->data[((ws.h_fft-i)%ws.h_fft)*2*ws.w_fft + ((2*ws.w_fft-2*j)%(2*ws.w_fft))+1];
 
-	    ws.fft_copy->data[i*2*ws.w_res+2*j] = 0.5*(re_h*im_h - re_hs*im_hs);
-	    ws.fft_copy->data[i*2*ws.w_res+2*j+1] = -0.25*(re_h*re_h - im_h * im_h - re_hs * re_hs + im_hs * im_hs);
+	    ws.fft_copy->data[i*2*ws.w_fft+2*j] = 0.5*(re_h*im_h - re_hs*im_hs);
+	    ws.fft_copy->data[i*2*ws.w_fft+2*j+1] = -0.25*(re_h*re_h - im_h * im_h - re_hs * re_hs + im_hs * im_hs);
 	  }
       }
 
     // And the inverse FFT, which is done in the similar way as before
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
 	// Apply the FFT^{-1} on the line i
-	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_res],1, ws.w_res, ws.wv_line, ws.ws_line);
+	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
       }
 
-    for(int j = 0 ; j < ws.w_res ; ++j)
+    for(int j = 0 ; j < ws.w_fft ; ++j)
       {
 	// Apply the FFT^{-1} on the column j
-	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j], ws.w_res, ws.h_res, ws.wv_column, ws.ws_column);
+	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j], ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
       }
 
     // And copy only the real part of fft_src in dst
@@ -246,7 +299,7 @@ namespace GSL_Convolution
       {
 	for(int j = 0 ; j < ws.w_src ; ++j)
 	  {
-	    dst->data[i*ws.w_src + j] = ws.fft_copy->data[i*2*ws.w_res+2*j];
+	    dst->data[i*ws.w_src + j] = ws.fft_copy->data[i*2*ws.w_fft+2*j];
 	  }
       }
   }
@@ -275,18 +328,18 @@ namespace GSL_Convolution
     for(unsigned int i = 0 ; i < int(ws.w_kernel/2) ; ++i)
       {
 	// The top rows of kernel are put on the bottom rows of fft_kernel
-	xv = gsl_matrix_subcolumn(ws.fft,2*ws.w_res-2*int(ws.w_kernel/2)+2*i+1,ws.h_res - int(ws.h_kernel/2),int(ws.h_kernel/2));
+	xv = gsl_matrix_subcolumn(ws.fft,2*ws.w_fft-2*int(ws.w_kernel/2)+2*i+1,ws.h_fft - int(ws.h_kernel/2),int(ws.h_kernel/2));
 	yv = gsl_matrix_subcolumn(kernel, i, 0, int(ws.h_kernel/2));
 	gsl_vector_memcpy(&xv.vector,&yv.vector);
 	// The bottom rows of the kernel are put on the top rows of fft_kernel
-	xv = gsl_matrix_subcolumn(ws.fft,2*ws.w_res-2*int(ws.w_kernel/2)+2*i+1,0,int((ws.h_kernel+1)/2));
+	xv = gsl_matrix_subcolumn(ws.fft,2*ws.w_fft-2*int(ws.w_kernel/2)+2*i+1,0,int((ws.h_kernel+1)/2));
 	yv = gsl_matrix_subcolumn(kernel, i, int(ws.h_kernel/2), int((ws.h_kernel+1)/2) );
 	gsl_vector_memcpy(&xv.vector,&yv.vector);
       }
     // The columns on the right of the center are put on the extreme left of fft_kernel
     for(unsigned int i = int(ws.w_kernel/2) ; i < ws.w_kernel ; ++i)
       {
-	xv = gsl_matrix_subcolumn(ws.fft,2*(i-int(ws.w_kernel/2))+1,ws.h_res - int(ws.h_kernel/2),int(ws.h_kernel/2));
+	xv = gsl_matrix_subcolumn(ws.fft,2*(i-int(ws.w_kernel/2))+1,ws.h_fft - int(ws.h_kernel/2),int(ws.h_kernel/2));
 	yv = gsl_matrix_subcolumn(kernel, i, 0, int(ws.h_kernel/2));
 	// The top rows of kernel are put on the bottom rows of fft_kernel
 	gsl_vector_memcpy(&xv.vector,&yv.vector);
@@ -297,28 +350,28 @@ namespace GSL_Convolution
       }
 
     // We compute the 2 forward DFT at once
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
 	// Apply the FFT on the line i
-	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_res],1, ws.w_res, ws.wv_line, ws.ws_line);
+	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
       }
-    for(int j = 0 ; j < ws.w_res ; ++j)
+    for(int j = 0 ; j < ws.w_fft ; ++j)
       {
 	// Apply the FFT on the column j
-	gsl_fft_complex_forward (&ws.fft->data[2*j],ws.w_res, ws.h_res, ws.wv_column, ws.ws_column);
+	gsl_fft_complex_forward (&ws.fft->data[2*j],ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
       }
 
     // Their element-wise product : be carefull, the matrices hold complex numbers !
     // We need a copy of fft to perform the product properly
     double re_h, im_h, re_hs, im_hs;
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
-	for(int j = 0 ; j < ws.w_res ; ++j)
+	for(int j = 0 ; j < ws.w_fft ; ++j)
 	  {
 	    re_h = gsl_matrix_get(ws.fft,i, 2*j);
 	    im_h = gsl_matrix_get(ws.fft,i, 2*j+1);
-	    re_hs = gsl_matrix_get(ws.fft,(ws.h_res-i)%ws.h_res, ((2*ws.w_res-2*j)%(2*ws.w_res)));
-	    im_hs = - gsl_matrix_get(ws.fft,(ws.h_res-i)%ws.h_res, ((2*ws.w_res-2*j)%(2*ws.w_res))+1);
+	    re_hs = gsl_matrix_get(ws.fft,(ws.h_fft-i)%ws.h_fft, ((2*ws.w_fft-2*j)%(2*ws.w_fft)));
+	    im_hs = - gsl_matrix_get(ws.fft,(ws.h_fft-i)%ws.h_fft, ((2*ws.w_fft-2*j)%(2*ws.w_fft))+1);
 
 	    gsl_matrix_set(ws.fft_copy, i, 2*j, 0.5*(re_h*im_h - re_hs*im_hs));
 	    gsl_matrix_set(ws.fft_copy, i, 2*j+1, -0.25*(re_h*re_h - im_h * im_h - re_hs * re_hs + im_hs * im_hs));
@@ -326,16 +379,16 @@ namespace GSL_Convolution
       }
 
     // And the inverse FFT, which is done in the similar way as before
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
 	// Apply the FFT^{-1} on the line i
-	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_res],1, ws.w_res, ws.wv_line, ws.ws_line);
+	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
       }
 
-    for(int j = 0 ; j < ws.w_res ; ++j)
+    for(int j = 0 ; j < ws.w_fft ; ++j)
       {
 	// Apply the FFT^{-1} on the column j
-	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j],ws.w_res, ws.h_res, ws.wv_column, ws.ws_column);
+	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j],ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
       }
 
     // And copy only the real part of fft_src in dst
@@ -381,7 +434,7 @@ namespace GSL_Convolution
 	    else if(j_src >= ws.w_src)
 	      j_src -= ws.w_src;
 
-	    ws.fft->data[i * 2*ws.w_res + 2*j] = src->data[i_src * ws.w_src + j_src];
+	    ws.fft->data[i * 2*ws.w_fft + 2*j] = src->data[i_src * ws.w_src + j_src];
 	  }
       }
 
@@ -395,67 +448,68 @@ namespace GSL_Convolution
       {
 	i_src = i - int(ws.h_kernel/2);
 	if(i_src < 0)
-	  i_src += ws.h_res;
+	  i_src += ws.h_fft;
 
 	for(int j = 0 ; j < ws.w_kernel ; ++j)
 	  {
 	    j_src = j - int(ws.w_kernel/2);
 	    if(j_src < 0)
-	      j_src += ws.w_res;
-	    ws.fft->data[i_src * 2*ws.w_res + 2*j_src+1] = kernel->data[i * ws.w_kernel + j];
+	      j_src += ws.w_fft;
+	    ws.fft->data[i_src * 2*ws.w_fft + 2*j_src+1] = kernel->data[i * ws.w_kernel + j];
 	  }
       }
 
     // We compute the 2 forward DFT at once
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
 	// Apply the FFT on the line i
-	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_res],1, ws.w_res, ws.wv_line, ws.ws_line);
+	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
       }
-    for(int j = 0 ; j < ws.w_res ; ++j)
+    for(int j = 0 ; j < ws.w_fft ; ++j)
       {
 	// Apply the FFT on the column j
-	gsl_fft_complex_forward (&ws.fft->data[2*j],ws.w_res, ws.h_res, ws.wv_column, ws.ws_column);
+	gsl_fft_complex_forward (&ws.fft->data[2*j],ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
       }
 
     // Their element-wise product : be carefull, the matrices hold complex numbers !
     // We need a copy of fft to perform the product properly
     double re_h, im_h, re_hs, im_hs;
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
-	for(int j = 0 ; j < ws.w_res ; ++j)
+	for(int j = 0 ; j < ws.w_fft ; ++j)
 	  {
-	    re_h = ws.fft->data[i*2*ws.w_res + 2*j];
-	    im_h = ws.fft->data[i*2*ws.w_res + 2*j+1];
-	    re_hs = ws.fft->data[((ws.h_res-i)%ws.h_res)*2*ws.w_res + ((2*ws.w_res-2*j)%(2*ws.w_res))];
-	    im_hs = -ws.fft->data[((ws.h_res-i)%ws.h_res)*2*ws.w_res + ((2*ws.w_res-2*j)%(2*ws.w_res))+1];
+	    re_h = ws.fft->data[i*2*ws.w_fft + 2*j];
+	    im_h = ws.fft->data[i*2*ws.w_fft + 2*j+1];
+	    re_hs = ws.fft->data[((ws.h_fft-i)%ws.h_fft)*2*ws.w_fft + ((2*ws.w_fft-2*j)%(2*ws.w_fft))];
+	    im_hs = -ws.fft->data[((ws.h_fft-i)%ws.h_fft)*2*ws.w_fft + ((2*ws.w_fft-2*j)%(2*ws.w_fft))+1];
 
-	    ws.fft_copy->data[i*2*ws.w_res+2*j] = 0.5*(re_h*im_h - re_hs*im_hs);
-	    ws.fft_copy->data[i*2*ws.w_res+2*j+1] = -0.25*(re_h*re_h - im_h * im_h - re_hs * re_hs + im_hs * im_hs);
+	    ws.fft_copy->data[i*2*ws.w_fft+2*j] = 0.5*(re_h*im_h - re_hs*im_hs);
+	    ws.fft_copy->data[i*2*ws.w_fft+2*j+1] = -0.25*(re_h*re_h - im_h * im_h - re_hs * re_hs + im_hs * im_hs);
 	  }
       }
 
     // And the inverse FFT, which is done in the similar way as before
-    for(int i = 0 ; i < ws.h_res ; ++i)
+    for(int i = 0 ; i < ws.h_fft ; ++i)
       {
 	// Apply the FFT^{-1} on the line i
-	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_res],1, ws.w_res, ws.wv_line, ws.ws_line);
+	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
       }
 
-    for(int j = 0 ; j < ws.w_res ; ++j)
+    for(int j = 0 ; j < ws.w_fft ; ++j)
       {
 	// Apply the FFT^{-1} on the column j
-	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j],ws.w_res, ws.h_res, ws.wv_column, ws.ws_column);
+	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j],ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
       }
 
     // And copy only the real part of the central part of fft_src in dst
     for(int i = 0 ; i < ws.h_src; ++i)
       for(int j = 0 ; j < ws.w_src ; ++j)
-	dst->data[i*ws.w_src + j] = ws.fft_copy->data[(i+int((ws.h_kernel+1)/2))*2*ws.w_res+2*(int((ws.w_kernel+1)/2)+j)];
+	dst->data[i*ws.w_src + j] = ws.fft_copy->data[(i+int((ws.h_kernel+1)/2))*2*ws.w_fft+2*(int((ws.w_kernel+1)/2)+j)];
   }
 
 void convolve(Workspace &ws, double * src, double * kernel, double * dst)
   {
+    /*
     gsl_matrix_view src_view = gsl_matrix_view_array(src, ws.h_src, ws.w_src);
     gsl_matrix_view kernel_view = gsl_matrix_view_array(kernel, ws.h_kernel, ws.w_kernel);
     gsl_matrix_view dst_view = gsl_matrix_view_array(dst, ws.h_src, ws.w_src);
@@ -482,6 +536,73 @@ void convolve(Workspace &ws, double * src, double * kernel, double * dst)
 	printf("   - CIRCULAR_OPTIMAL\n");
 	// TODO EXCEPTION
       }
+    */
+
+    // First clean up in_src;
+    for(int i = 0 ; i < ws.h_fft ; ++i)
+      {
+	for(int j = 0 ; j < ws.w_fft ; ++j)
+	  {
+	    ws.in_src[i*ws.w_fft+j][0] = 0.0;
+	    ws.in_src[i*ws.w_fft+j][1] = 0.0;
+	  }
+      }
+
+
+
+
+
+
+
+
+
+    // We compute the 2 forward DFT at once
+    for(int i = 0 ; i < ws.h_fft ; ++i)
+      {
+	// Apply the FFT on the line i
+	gsl_fft_complex_forward (&ws.fft->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
+      }
+    for(int j = 0 ; j < ws.w_fft ; ++j)
+      {
+	// Apply the FFT on the column j
+	gsl_fft_complex_forward (&ws.fft->data[2*j],ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
+      }
+
+    // Their element-wise product : be carefull, the matrices hold complex numbers !
+    // We need a copy of fft to perform the product properly
+    double re_h, im_h, re_hs, im_hs;
+    for(int i = 0 ; i < ws.h_fft ; ++i)
+      {
+	for(int j = 0 ; j < ws.w_fft ; ++j)
+	  {
+	    re_h = gsl_matrix_get(ws.fft,i, 2*j);
+	    im_h = gsl_matrix_get(ws.fft,i, 2*j+1);
+	    re_hs = gsl_matrix_get(ws.fft,(ws.h_fft-i)%ws.h_fft, ((2*ws.w_fft-2*j)%(2*ws.w_fft)));
+	    im_hs = - gsl_matrix_get(ws.fft,(ws.h_fft-i)%ws.h_fft, ((2*ws.w_fft-2*j)%(2*ws.w_fft))+1);
+
+	    gsl_matrix_set(ws.fft_copy, i, 2*j, 0.5*(re_h*im_h - re_hs*im_hs));
+	    gsl_matrix_set(ws.fft_copy, i, 2*j+1, -0.25*(re_h*re_h - im_h * im_h - re_hs * re_hs + im_hs * im_hs));
+	  }
+      }
+
+    // And the inverse FFT, which is done in the similar way as before
+    for(int i = 0 ; i < ws.h_fft ; ++i)
+      {
+	// Apply the FFT^{-1} on the line i
+	gsl_fft_complex_inverse(&ws.fft_copy->data[i*2*ws.w_fft],1, ws.w_fft, ws.wv_line, ws.ws_line);
+      }
+
+    for(int j = 0 ; j < ws.w_fft ; ++j)
+      {
+	// Apply the FFT^{-1} on the column j
+	gsl_fft_complex_inverse(&ws.fft_copy->data[2*j],ws.w_fft, ws.h_fft, ws.wv_column, ws.ws_column);
+      }
+
+
+
+
+
+
   }
 
 }
