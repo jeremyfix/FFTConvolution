@@ -131,13 +131,13 @@ where $f_N$ is the signal defined as repetitions of $N$, i.e. a periodic signal 
 
 \begin{figure}
 \centering
-\resizebox{18cm}{!}{\input{../Images/convolution.pdf_t}}
+\resizebox{18cm}{!}{\input{Images/convolution.pdf_t}}
 \caption{\label{fig:linear_convolution} Schematic illustration of the linear convolution for an odd and even filter size}
 \end{figure}
 
 \begin{figure}
 \centering
-\resizebox{18cm}{!}{\input{../Images/circular_convolution.pdf_t}}
+\resizebox{18cm}{!}{\input{Images/circular_convolution.pdf_t}}
 \caption{\label{fig:circular_convolution} Schematic illustration of the circular convolution for an odd and even filter size}
 \end{figure}
 
@@ -154,7 +154,7 @@ With the definitions of the standard convolutions given above, these operations 
 \end{itemize}
 The figure \ref{fig:benchmark_std_convolution.pdf} shows this execution time function of the signals' size and evaluated with the following script : \href{http://jeremy.fix.free.fr/Software/Convolution/std_convolution.cc}{std\_convolution.cc}.
 \begin{figure}[htbp]
-\center \includegraphics[width=0.5\linewidth]{../Images/benchmark_std_convolution.pdf}
+\center \includegraphics[width=0.5\linewidth]{Images/benchmark_std_convolution.pdf}
 \caption{\label{fig:benchmark_std_convolution.pdf} Execution time for computing a linear or circular convolution in C++, using nested for loops, of two signals of size $N$ and $M$. The execution time for a circular convolution grows with $N \times M$. For the linear convolution, the sum is restricted on less indices, which leads to an execution time faster than $N \times M$}
 \end{figure}
 
@@ -272,7 +272,7 @@ For the divide-and-conquer like algorithms (Cooley-Tukey, Prime-Factor), computi
 There are several librairies providing optimized methods for computing a DFT. To cite only two of them : the \href{http://www.gnu.org/software/gsl}{GSL (Gnu Scientific Library)} and \href{http://www.fftw.org}{\nolinkurl{FFTW3}}. Others are cited on the \href{http://www.fftw.org/benchfft/ffts.html}{FFTW website}. The GSL proposes only 1D fourier transforms while FFTW3 proposes ND Fourier transforms. Therefore, for GSL, we will use the method presented in the previous section to compute a 2D Fourier Transform using only 1D Fourier transform. The scripts used to compute the Fourier Transform with the GSL and FFTW3 are \verb?fft_gsl.cc? and \verb?fft_fftw.cc?.\\
 
 \begin{figure}[htbp]
-\center \includegraphics[width=0.6\linewidth]{../Images/test_fft-crop.pdf}
+\center \includegraphics[width=0.6\linewidth]{Images/test_fft-crop.pdf}
 \caption{\label{fig:test_fft.pdf} Execution time for computing a 2D FFT. With a signal of size $NxN$, the performancs of the FFTW is well approximated with a curve in $N^2 \log(N)$ while the performances of the GSL sometimes reach $(N^2)^{3/2}$.}
 \end{figure}
 
@@ -422,7 +422,7 @@ If we want to compute the \textbf{Same} linear convolution (eq. \ref{eq:linear_c
 %\end{eqnarray}
 %And let's construct the signal $g_L$ which is the signal $g$, shifted in time, wrapped around and padded with $L$ zeros in the "middle" :
 %\begin{figure}[htbp]
-%\center \includegraphics[width=\linewidth]{../Images/wrap_g.pdf}
+%\center \includegraphics[width=\linewidth]{Images/wrap_g.pdf}
 %\end{figure}
 %
 %\begin{eqnarray}
@@ -514,14 +514,14 @@ To determine if a size is optimal, we just factorize it and check if the factori
 To compute a linear convolution with the FFT, it is sufficient to pad the images with enough zeros, namely $\frac{N+1}{2}$. This bound is a lower bound. Therefore, we can pad the images with more than $\frac{N+1}{2}$ to get sizes that are optimally computed with the algorithm we use.\\
 
 \begin{figure}[htbp]
-\center \includegraphics[width=0.75\linewidth]{../Images/benchmark_linear_convolution_gsl.pdf}
+\center \includegraphics[width=0.75\linewidth]{Images/benchmark_linear_convolution_gsl.pdf}
 \caption{\label{fig:benchmark_linear_convolution_gsl.pdf}Execution time for performing a linear convolution with GSL. The times for both the unpadded and padded images are shown. Clearly, padding with zeros in order to get optimal sizes (in the sense of the factor decomposition of GSL) improves the performances.}
 \end{figure}
 
 The time it takes to compute a 2D linear convolution with or without padding, using the GSL (for which optimal sizes are of the form $2^a3^b4^c5^d6^e7^f$, see \href{http://www.gnu.org/software/gsl/manual/html_node/Mixed_002dradix-FFT-routines-for-complex-data.html}{GSL website}), is shown on the figure \ref{fig:benchmark_linear_convolution_gsl.pdf}. It computes a 2D linear convolution of 2 randomly generated images of the same size. Padding clearly improves the processing time of the convolution. For this illustration, we used a small x-axis increment to better appreciate the effect of non-optimal sizes. The dashed line represents the execution time when the kernel size is small (actually 3x3). Since padding depends on the size of the kernel, the kernel size influences the size of the FFTs to compute. For convenience, only the times of the optimal version with a small kernel are plotted. This illustration was generated with the results produced by this script : \href{http://jeremy.fix.free.fr/Software/Convolution/linear_convolution_gsl_benchmark.cc}{linear\_convolution\_gsl\_benchmark.cpp}\\
 
 \begin{figure}[htbp]
-\center \includegraphics[width=0.85\linewidth]{../Images/benchmark_linear_convolution_fftw.pdf}
+\center \includegraphics[width=0.85\linewidth]{Images/benchmark_linear_convolution_fftw.pdf}
 \caption{\label{fig:benchmark_linear_convolution_fftw.pdf}Execution time for performing a linear convolution with FFTW. The times for both the unpadded and padded images are shown. Clearly, padding with zeros in order to get optimal sizes (in the sense of the factor decomposition of FFTW) improves the performances.}
 \end{figure}
 
@@ -530,7 +530,7 @@ The figure \ref{fig:benchmark_linear_convolution_fftw.pdf} shows the execution t
 The figure \ref{fig:benchmark_linear_convolution_compare.pdf} compares the execution times with the GSL and FFTW implementations. The FFTW based implementation performs slightly better than the GSL implementation. It performs almost $20\%$ better as soon as the image size is at least $200 \times 200$. The performances of the GSL are not as bad as we may have thought when we observed the bad performances of the GSL computing a FFT. It is simply because we are interested in a convolution product, therefore we are not obliged to stick to some specific frequencies and we can pad the signal as we want in order to get optimally computed sizes.
 
 \begin{figure}[htbp]
-\center \includegraphics[width=0.85\linewidth]{../Images/benchmark_linear_convolution_compare.pdf}
+\center \includegraphics[width=0.85\linewidth]{Images/benchmark_linear_convolution_compare.pdf}
 \caption{\label{fig:benchmark_linear_convolution_compare.pdf}Comparison of the execution time for performing a linear convolution using optimal sizes with GSL or FFTW. The FFTW based implementation is slightly better, almost $20\%$ faster for sizes at least $200\times 200$.}
 \end{figure}
 
@@ -542,14 +542,14 @@ We can also change the size of an image to optimally compute a circular convolut
 On figure \ref{fig:benchmark_circular_convolution_gsl.pdf} (again involving 2 randomly generated images of the same size), padding does not always lead to better performances. When the size of the image is optimal, it is clear that the padded version must be worse. However, when the size is not optimal, padding can or cannot improves the performances. In this case, it is not clear how to define a rule deciding when we should pad or when we should not. We may define a simple rule : if the size is optimal, do not pad, otherwise pad. We may also perform tests before-hand to check which version is faster but this is really dependent on the size of the images to convolve.\\
 
 \begin{figure}[htbp]
-\center \includegraphics[width=0.75\linewidth]{../Images/benchmark_circular_convolution_gsl.pdf}
+\center \includegraphics[width=0.75\linewidth]{Images/benchmark_circular_convolution_gsl.pdf}
 \caption{\label{fig:benchmark_circular_convolution_gsl.pdf}Execution time for performing a circular convolution with GSL. Two versions are plotted : with or without padding. The two curves of the padded version (solid and dashed) are the boundaries of the execution time, whatever the kernel size.}
 \end{figure}
 
 On the figure \ref{fig:benchmark_circular_convolution_fftw.pdf}, we see that there is no benefits in padding to get optimal sizes with FFTW. Circular convolution is what is computed by default when using the product of the FFTs. Therefore, when we pad an image to get optimal sizes but still to compute a circular convolution, we cannot be better than the non-padded version for optimal sizes and it depends for non-optimal sizes on the performance of the algorithm for these sizes. It appears that FFTW has rather good performances even for sizes it is not optimized for. This illustration was generated with the following script : \href{http://jeremy.fix.free.Fr/Software/Convolution/circular_convolution_fftw_benchmark.cc}{circular\_convolution\_fftw\_benchmark.cc}.\\
 
 \begin{figure}[htbp]
-\center \includegraphics[width=0.75\linewidth]{../Images/benchmark_circular_convolution_fftw.pdf}
+\center \includegraphics[width=0.75\linewidth]{Images/benchmark_circular_convolution_fftw.pdf}
 \caption{\label{fig:benchmark_circular_convolution_fftw.pdf}Execution time for performing a circular convolution with FFTW. Two versions are plotted : with and without padding with wrapped around values to get optimal sizes. For a circular convolution, padding makes the performances smoother but also worse !}
 \end{figure}
 
@@ -557,7 +557,7 @@ On the figure \ref{fig:benchmark_circular_convolution_fftw.pdf}, we see that the
 To compare the execution times, we took the smallest execution time of the padded or unpadded convolution with the GSL, and the unpadded convolution of FFTW, and computed their ratio. The results are shown on figure \ref{fig:benchmark_circular_convolution_compare.pdf}. The FFTW based version appears to be better than the GSL based implementation. The differences are higher than for the linear convolution, with performances almost $75\%$ better, again for sizes at least $200 \times 200$.
 
 \begin{figure}[htbp]
-\center \includegraphics[width=0.75\linewidth]{../Images/benchmark_circular_convolution_compare.pdf}
+\center \includegraphics[width=0.75\linewidth]{Images/benchmark_circular_convolution_compare.pdf}
 \caption{\label{fig:benchmark_circular_convolution_compare.pdf} Comparison of the execution time for a circular convolution. For the GSL version, we used the minimum of the padded and unpadded times. For the FFTW version, we used the unpadded version. It seems that the FFTW version performs better.}
 \end{figure}
 
@@ -593,12 +593,12 @@ The scripts given in the previous section were using randomly generated matrices
 On the figures \ref{fig:benchmark_linear_everything.pdf} and \ref{fig:benchmark_circular_everything.pdf} we compare the time it takes to compute a linear or circular convolution for different image and kernel sizes using FFTW, GSL and the nested for loops. In the previous sections, the benchmarks were always done with 2 images of the same size. This is rather unusual. Usually, the filter size is much smaller than the image size. To get an idea of how well the convolution involving the FFT performs, the execution time of a standard convolution (involving for loops) is also given. The illustrations were generated with the results of \href{http://jeremy.fix.Free.Fr/Software/Convolution/linear_everything.cc}{linear\_everything.cc} and \href{http://jeremy.fix.Free.Fr/Software/Convolution/circular_everything.cc}{circular\_everything.cc}.
 
 \begin{figure}[htbp]
-\center \includegraphics[width=.75\linewidth]{../Images/benchmark_linear_everything.pdf}
+\center \includegraphics[width=.75\linewidth]{Images/benchmark_linear_everything.pdf}
 \caption{\label{fig:benchmark_linear_everything.pdf} Comparison of the processing time of a linear convolution with different image and filter sizes. Using a FFT based implementation is beneficial only above a certain filter size.}
 \end{figure}
 
 \begin{figure}[htbp]
-\center \includegraphics[width=.75\linewidth]{../Images/benchmark_circular_everything.pdf}
+\center \includegraphics[width=.75\linewidth]{Images/benchmark_circular_everything.pdf}
 \caption{\label{fig:benchmark_circular_everything.pdf} Comparison of the processing time of a circular convolution with different image and filter sizes. Using a FFT based implementation is beneficial only above a certain filter size.}
 \end{figure}
 
