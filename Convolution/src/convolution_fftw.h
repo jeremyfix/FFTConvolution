@@ -75,7 +75,7 @@ void init_workspace(Workspace & ws, Convolution_Mode mode, int h_src, int w_src,
         // Valid Linear convolution
         if(ws.h_kernel > ws.h_src || ws.w_kernel > ws.w_src)
         {
-            printf("Warning : The 'valid' convolution results in an empty matrix\n");
+	  //printf("Warning : The 'valid' convolution results in an empty matrix\n");
             ws.h_fftw = 0;
             ws.w_fftw = 0;
             ws.h_dst = 0;

@@ -1,10 +1,14 @@
 #!/bin/bash
 
-rm ../Data/benchmarks_convolution_fftw.txt
+rm ../Data/benchmarks_convolution_fftw.txt -f
 
-MAX_SIZE=100
+if [ $# == 0 ] ; then
+   echo Call with : $0 \<maxsize\> 
+   exit 1
+fi
+MAX_SIZE=$1
 
-cd ../bin
+
 echo "Running convolution_fftw_benchmark_linear.bin"
 for i in $(seq 3 $MAX_SIZE)
 do
@@ -13,12 +17,12 @@ do
 	./convolution_fftw_benchmark_linear.bin $i $j > /dev/null
     done
 done
-echo "Running convolution_fftw_benchmark_linear_optimal.bin"
+echo "Running convolution_fftw_benchmark_linear_unpadded.bin"
 for i in $(seq 3 $MAX_SIZE)
 do
     for j in $(seq 3 $(($i-1)))
     do
-	./convolution_fftw_benchmark_linear_optimal.bin $i $j > /dev/null
+	./convolution_fftw_benchmark_linear_unpadded.bin $i $j > /dev/null
     done
 done
 
@@ -31,15 +35,14 @@ do
 	./convolution_fftw_benchmark_circular.bin $i $j > /dev/null
     done
 done
-echo "Running convolution_fftw_benchmark_circular_optimal.bin"
+echo "Running convolution_fftw_benchmark_circular_padded.bin"
 for i in $(seq 3 $MAX_SIZE)
 do
     for j in $(seq 3 $(($i-1)))
     do
-	./convolution_fftw_benchmark_circular_optimal.bin $i $j > /dev/null
+	./convolution_fftw_benchmark_circular_padded.bin $i $j > /dev/null
     done
 done
 
-cd ../BashScripts
 
 

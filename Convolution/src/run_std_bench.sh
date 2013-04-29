@@ -1,10 +1,13 @@
 #!/bin/bash
 
-rm ../Data/benchmarks_convolution_std.txt
+rm ../Data/benchmarks_convolution_std.txt -f
 
-MAX_SIZE=100
+if [ $# == 0 ] ; then
+   echo Call with : $0 \<maxsize\> 
+   exit 1
+fi
+MAX_SIZE=$1
 
-cd ../bin
 echo "Running convolution_std_benchmark_linear.bin"
 for i in $(seq 3 $MAX_SIZE)
 do
@@ -22,6 +25,5 @@ do
 	./convolution_std_benchmark_circular.bin $i $j > /dev/null
     done
 done
-cd ../BashScripts
 
 

@@ -1,7 +1,7 @@
 // Compilation with :
-// FFTW : g++ -o convolution_octave convolution_octave.cc -DCONVOLUTION=0 -O3 -Wall `pkg-config --libs --cflags gsl fftw3` -std=c++11 `mkoctfile -p ALL_CXXFLAGS` `mkoctfile -p OCTAVE_LIBS` `mkoctfile -p LFLAGS`
-// GSL : g++ -o convolution_octave convolution_octave.cc -DCONVOLUTION=1 -O3 -Wall `pkg-config --libs --cflags gsl fftw3` -std=c++11 `mkoctfile -p ALL_CXXFLAGS` `mkoctfile -p OCTAVE_LIBS` `mkoctfile -p LFLAGS`
-// STD : g++ -o convolution_octave convolution_octave.cc -DCONVOLUTION=2 -O3 -Wall `pkg-config --libs --cflags gsl fftw3` -std=c++11 `mkoctfile -p ALL_CXXFLAGS` `mkoctfile -p OCTAVE_LIBS` `mkoctfile -p LFLAGS`
+// FFTW : g++ -o convolution_test convolution_test.cc -DCONVOLUTION=0 -O3 -Wall `pkg-config --libs --cflags gsl fftw3` -std=c++11 `mkoctfile -p ALL_CXXFLAGS` `mkoctfile -p OCTAVE_LIBS` `mkoctfile -p LFLAGS`
+// GSL : g++ -o convolution_test convolution_test.cc -DCONVOLUTION=1 -O3 -Wall `pkg-config --libs --cflags gsl fftw3` -std=c++11 `mkoctfile -p ALL_CXXFLAGS` `mkoctfile -p OCTAVE_LIBS` `mkoctfile -p LFLAGS`
+// STD : g++ -o convolution_test convolution_test.cc -DCONVOLUTION=2 -O3 -Wall `pkg-config --libs --cflags gsl fftw3` -std=c++11 `mkoctfile -p ALL_CXXFLAGS` `mkoctfile -p OCTAVE_LIBS` `mkoctfile -p LFLAGS`
 
 // Convolution:
 // - 0 : fftw, 
@@ -21,16 +21,19 @@
 #include "convolution_fftw.h"
 using namespace FFTW_Convolution;
 #define DO_PADDED_UNPADDED_TESTS true
+#define SUFFIX_M_SCRIPT "fftw"
 
 #elif CONVOLUTION==1
 #include "convolution_gsl.h"
 using namespace GSL_Convolution;
 #define DO_PADDED_UNPADDED_TESTS true
+#define SUFFIX_M_SCRIPT "gsl"
 
 #elif CONVOLUTION==2
 #include "convolution_std.h"
 using namespace STD_Convolution;
 #define DO_PADDED_UNPADDED_TESTS false
+#define SUFFIX_M_SCRIPT "std"
 
 #else
 # error Unrecognized convolution type!
@@ -42,7 +45,7 @@ using namespace STD_Convolution;
 // We report if the results have the same dimensions and do not differ in Euclidean norm
 // more than NORM_LIMIT_BEFORE_ERROR (1e-10)
 
-#define NB_CONVOLUTIONS_PER_CATEGORY 5
+#define NB_CONVOLUTIONS_PER_CATEGORY 50
 #define NORM_LIMIT_BEFORE_ERROR 1e-10
 
 #include <tuple>
@@ -65,7 +68,7 @@ using namespace STD_Convolution;
 #include <octave/oct.h>
 #include <octave/octave.h>
 #include <octave/parse.h>
-#include <octave/toplev.h> /* do_octave_atexit */
+#include <octave/toplev.h>
 
 
 typedef std::tuple<int, int, int, int> size_tuple;
@@ -122,6 +125,8 @@ bool bench_and_compare(Workspace &ws, int h_src, int w_src, int h_kernel, int w_
     case LINEAR_VALID:
       logfile << "dst = convn(src, kernel, 'valid');";
       dst_octave = convn(src_mat, kernel_mat, convn_valid);
+      if(ws.h_dst + ws.w_dst == 0)
+	logfile << "Warning, the valid convolution results in an empty matrix " << std::endl;
       break;
 #if DO_PADDED_UNPADDED_TESTS
     case LINEAR_SAME_UNPADDED:
@@ -201,11 +206,14 @@ bool bench_and_compare(Workspace &ws, int h_src, int w_src, int h_kernel, int w_
 
 
   // We now compare the results
-  if(ws.h_dst != dst_octave.dim1() || ws.w_dst != dst_octave.dim2())
+  if( ((ws.h_dst + ws.w_dst == 0) && (int(dst_octave.dim1()) != 0 && int(dst_octave.dim2()) != 0)) ||// dst_octave.dim1 == 0 means empty matrix
+      ((ws.h_dst != dst_octave.dim1() || ws.w_dst != dst_octave.dim2())&& (int(dst_octave.dim1()) != 0 && int(dst_octave.dim2()) != 0)) )
     {
+      std::cout << "Dimensions " << ws.h_dst + ws.w_dst << " != " << int(dst_octave.dim1()) << std::endl;
       // Dump the error in the logfile
       logfile << "Different sizes !! (" << ws.h_dst << "," << ws.w_dst << ") != (" << dst_octave.dim1() << "," << dst_octave.dim2()  << ")" << std::endl;
       logfile << "FAILED" << std::endl;
+      clear_workspace(ws);
       return false;
     }
   else
@@ -243,17 +251,21 @@ bool bench_and_compare(Workspace &ws, int h_src, int w_src, int h_kernel, int w_
 	      else
 		logfile << "];" << std::endl;
 	    }
+	  clear_workspace(ws);
 	  logfile << "FAILED" << std::endl;
 	  return false;
 	}
       else
 	{
+	  clear_workspace(ws);
 	  logfile << "PASSED" << std::endl;
 	  return true;
 	}
     }
 
   clear_workspace(ws);
+  printf("SHOULD NEVER OCCUR !!!");
+  return true;
 }
 
 // For the circular convolution same and same_padded, Octave does not seem to handle
@@ -265,7 +277,12 @@ void write_to_matlab_file(Workspace &ws, int h_src, int w_src, int h_kernel, int
   convolve(ws, src, kernel);
 
   // We now fill in the m-file with the code for performing the convolution
-  mfile << "disp('Testing " << category_name << "')" << std::endl;
+  mfile << "if(~ map_results.isKey('" << category_name << "_invalid_sizes'))" << std::endl;
+  mfile << "map_results('" << category_name << "_invalid_sizes') = 0;" << std::endl;
+  mfile << "map_results('" << category_name << "_failed') = 0;" << std::endl;
+  mfile << "map_results('" << category_name << "_success') = 0;" << std::endl;
+  mfile << "end" << std::endl;
+
   // we write in the matrix we convolve
   mfile << std::scientific ;
   mfile << "src = [";
@@ -308,17 +325,20 @@ void write_to_matlab_file(Workspace &ws, int h_src, int w_src, int h_kernel, int
     }
   // Check the norm of the difference
   mfile << "if(size(dst) ~= size(dst_matlab))" << std::endl;
-  mfile << "disp('Invalid sizes');" << std::endl;
-  mfile << "size(dst)" << std::endl;
-  mfile << "size(dst_matlab)" << std::endl;
+  mfile << "map_results('" << category_name << "_invalid_sizes') = " << "map_results('" << category_name << "_invalid_sizes') + 1;" << std::endl;
+  mfile << "map_results('" << category_name << "_failed') = " << "map_results('" << category_name << "_failed') + 1;" << std::endl;
+  mfile << " msg = sprintf('Invalid sizes : %i x %i ~= %i x %i\\n', size(dst, 1), size(dst, 2), size(dst_matlab,1), size(dst_matlab,2));" << std::endl;
+  mfile << " disp(msg);" << std::endl;
   mfile << "else " << std::endl;
 
   // Apparently, we cannot get better than around 2*1e-5 difference in the norm
   mfile << "if(norm(dst - dst_matlab) > 3e-5)" << std::endl;
-  mfile << "disp('The norm is greater than 3e-5')" << std::endl;
-  mfile << "norm(dst - dst_matlab)" << std::endl;
+  mfile << " msg = sprintf('Norm of the difference : %e > 3e-5\\n', norm(dst - dst_matlab));" << std::endl;
+  mfile << " disp(msg);" << std::endl;
+  mfile << "map_results('" << category_name << "_failed') = " << "map_results('" << category_name << "_failed') + 1;" << std::endl;
   mfile << "else " << std::endl;
-  mfile << "disp('Ok!')" << std::endl;
+  mfile << "map_results('" << category_name << "_success') = " << "map_results('" << category_name << "_success') + 1;" << std::endl;
+  //mfile << "disp('Ok!')" << std::endl;
   mfile << "end" << std::endl;
   mfile << "end" << std::endl;
   
@@ -345,7 +365,7 @@ int main(int argc, char * argv[])
   // - circular same padded
 
   // We initialize the octave evalutor
-  octave_main (argc, argv, 1);
+  octave_main (0, argv, 1);
 
   srand(time(NULL));
 
@@ -360,16 +380,29 @@ int main(int argc, char * argv[])
 
   Workspace ws;
 
-  std::ofstream logfile("convolution_octave.log");
-  std::ofstream mfile("convolution_octave.m");
-  
+  std::string logfilename, mfilename;
+  std::ostringstream ostr("");
+  ostr << "convolution_test_" << SUFFIX_M_SCRIPT << ".log";
+  logfilename = ostr.str();
+
+  ostr.str("");
+  ostr << "convolution_test_" << SUFFIX_M_SCRIPT << ".m";
+  mfilename = ostr.str();
+
+
+  std::ofstream logfile(logfilename);
+  std::ofstream mfile(mfilename);
+
+  // Create the map which will contain the summary of the tests
+  mfile << "map_results = containers.Map();" << std::endl;
+
   category_labels.push_back("1D even/even Hx1");
   category_sizes.push_back(std::vector< size_tuple>());
   for(int i = 0 ; i < NB_CONVOLUTIONS_PER_CATEGORY; ++i)
     {
       h_src = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0); // 2*[30 ; 50]
       w_src = 1;
-      h_kernel = 2*int(20.0 * rand()/double(RAND_MAX) + 10.0); // 2*[10; 30]
+      h_kernel = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0); // 2*[30; 50]
       w_kernel = 1;
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
@@ -379,7 +412,7 @@ int main(int argc, char * argv[])
     {
       h_src = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0); // 2*[30 ; 50]
       w_src = 1;
-      h_kernel = 2*int(20.0 * rand()/double(RAND_MAX) + 10.0)+1; // 2*[10; 30]+1
+      h_kernel = 2*int(20.0 * rand()/double(RAND_MAX) + 20.0)+1; // 2*[10; 30]+1
       w_kernel = 1;
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
@@ -390,7 +423,7 @@ int main(int argc, char * argv[])
     {
       h_src = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0)+1; // 2*[30 ; 50]
       w_src = 1;
-      h_kernel = int(20.0 * rand()/double(RAND_MAX) + 10.0); // 2*[10; 30]+1
+      h_kernel = int(20.0 * rand()/double(RAND_MAX) + 20.0); // 2*[10; 30]+1
       w_kernel = 1;
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
@@ -401,7 +434,7 @@ int main(int argc, char * argv[])
     {
       h_src = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0)+1; // 2*[30 ; 50]
       w_src = 1;
-      h_kernel = int(20.0 * rand()/double(RAND_MAX) + 10.0)+1; // 2*[10; 30]+1
+      h_kernel = int(20.0 * rand()/double(RAND_MAX) + 20.0)+1; // 2*[10; 30]+1
       w_kernel = 1;
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
@@ -415,7 +448,7 @@ int main(int argc, char * argv[])
       h_src = 1;
       w_src = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0); // 2*[30 ; 50]
       h_kernel = 1;
-      w_kernel = 2*int(20.0 * rand()/double(RAND_MAX) + 10.0); // 2*[10; 30]
+      w_kernel = 2*int(20.0 * rand()/double(RAND_MAX) + 20.0); // 2*[10; 30]
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
   category_labels.push_back("1D even/odd 1xW");
@@ -425,7 +458,7 @@ int main(int argc, char * argv[])
       h_src = 1;
       w_src = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0); // 2*[30 ; 50]
       h_kernel = 1;
-      w_kernel = 2*int(20.0 * rand()/double(RAND_MAX) + 10.0)+1; // 2*[10; 30]+1
+      w_kernel = 2*int(20.0 * rand()/double(RAND_MAX) + 20.0)+1; // 2*[10; 30]+1
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
 
@@ -436,7 +469,7 @@ int main(int argc, char * argv[])
       h_src = 1;
       w_src = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0)+1; // 2*[30 ; 50]
       h_kernel = 1;
-      w_kernel = int(20.0 * rand()/double(RAND_MAX) + 10.0); // 2*[10; 30]+1
+      w_kernel = int(20.0 * rand()/double(RAND_MAX) + 20.0); // 2*[10; 30]+1
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
 
@@ -447,7 +480,7 @@ int main(int argc, char * argv[])
       h_src = 1;
       w_src = 2*int(20.0 * rand()/double(RAND_MAX) + 30.0)+1; // 2*[30 ; 50]
       h_kernel = 1;
-      w_kernel = int(20.0 * rand()/double(RAND_MAX) + 10.0)+1; // 2*[10; 30]+1;
+      w_kernel = int(20.0 * rand()/double(RAND_MAX) + 20.0)+1; // 2*[10; 30]+1;
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
   
@@ -459,8 +492,8 @@ int main(int argc, char * argv[])
     {
       h_src = int(20.0 * rand()/double(RAND_MAX) + 30.0);
       w_src = int(20.0 * rand()/double(RAND_MAX) + 30.0); // [30 ; 50]
-      h_kernel = int(20.0 * rand()/double(RAND_MAX) + 10.0); // [10; 30];
-      w_kernel = int(20.0 * rand()/double(RAND_MAX) + 10.0); // [10; 30];
+      h_kernel = int(20.0 * rand()/double(RAND_MAX) + 20.0); // [10; 30];
+      w_kernel = int(20.0 * rand()/double(RAND_MAX) + 20.0); // [10; 30];
       category_sizes[category_sizes.size() - 1].push_back(std::make_tuple(h_src, w_src, h_kernel, w_kernel));
     }
 
@@ -551,9 +584,20 @@ int main(int argc, char * argv[])
     }
 
   std::cout << std::setfill('-') << std::setw(50) << '-' << std::endl;
-  print_error("To check the results of the circular convolutions, please run the convolution_octave.m matlab file");
+
+  ostr.str("");
+  ostr << "To check the results of the circular convolutions (with a result of the same size as the source), please run the " << mfilename << " matlab file ";
+  print_error(ostr.str());
   std::cout << std::setfill('-') << std::setw(50) << '-' << std::endl;
 
+
+  // Finish by filling in the m-file the code to display the summary of the results
+  mfile << "k = map_results.keys();" << std::endl;
+  mfile << "v = map_results.values();" << std::endl;
+  mfile << "for i=1:length(k)" << std::endl;
+  mfile << " msg  = sprintf('%s : %i\\n', k{i}, v{i});" << std::endl;
+  mfile << " disp(msg);" << std::endl;
+  mfile << "end" << std::endl;
 
   delete[] src;
   delete[] kernel;
