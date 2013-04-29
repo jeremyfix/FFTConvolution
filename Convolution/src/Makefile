@@ -23,7 +23,7 @@ BINS_BENCHMARKS_SCRIPTS=\
 	run_octave_bench.sh
 #	run_gsl_bench.sh \
 
-MAX_SIZE_BENCHMARK= 10
+MAX_SIZE_BENCHMARK= 100
 
 
 BINS_TEST=\
