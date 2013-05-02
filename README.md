@@ -39,3 +39,12 @@ Compilation/Usage
 -----------------
 
 Each of the script has a line at the beginning giving the compilation line. 
+
+Results
+-------
+
+Below we plot the comparison of the execution times for performing a linear convolution (the result being of the same size than the source) with various libraries.
+
+![Comparison of the execution times for linear convolutions](Convolution/PythonScripts/comparison_linear.png)
+
+All these plots show ratio of execution times with a ratio of 1.0 in white. Overall, it is clear that using the FFTW (first line of the plots) library is faster than nested for loops or Octave as soon as the kernel is at least, say, 10 x 10. Overwise, it is better to use nested for loops.
