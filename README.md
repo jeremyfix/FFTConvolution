@@ -45,9 +45,14 @@ Results
 
 TODO: give an order of the speedup
 
+Below you will find some benchmarks comparing the execution times of 2D convolution (linear same and circular full) for various implementations :
 
+- C++ using nested for loops
+- Octave convn for the linear convolution and fftconv/fftconv2 for the circular convolution
+- C++ and FFTW
+- C++ and GSL
 
-Below we plot the comparison of the execution times for performing a linear convolution (the result being of the same size than the source) with various libraries.
+Below we plot the comparison of the execution times for performing a linear convolution (the result being of the same size than the source) with various libraries. The convolutions were 2D convolutions. The axis refer to the width or height of the source/kernel. When we say a source size of 50, we mean an image 50 x 50.
 
 ![Comparison of the execution times for linear convolutions](Convolution/PythonScripts/comparison_linear.png)
 
