@@ -59,11 +59,16 @@ def cmap_center_point_adjust(cmap, range, center):
 
 
 data = np.genfromtxt('../Data/benchmarks_convolution_fftw.txt', dtype='str')
-
 data_linear_fftw = np.array(data[np.where(data[:,0] == 'linear'),1:], dtype=np.float)
 data_linear_fftw = data_linear_fftw.reshape(data_linear_fftw.shape[1:]) # drop the useless mode dimension
 data_circular_fftw = np.array(data[np.where(data[:,0] == 'circular'),1:], dtype=np.float)
 data_circular_fftw = data_circular_fftw.reshape(data_circular_fftw.shape[1:]) # drop the useless mode dimension
+
+data = np.genfromtxt('../Data/benchmarks_convolution_gsl.txt', dtype='str')
+data_linear_gsl = np.array(data[np.where(data[:,0] == 'linear'),1:], dtype=np.float)
+data_linear_gsl = data_linear_gsl.reshape(data_linear_gsl.shape[1:]) # drop the useless mode dimension
+data_circular_gsl = np.array(data[np.where(data[:,0] == 'circular'),1:], dtype=np.float)
+data_circular_gsl = data_circular_gsl.reshape(data_circular_gsl.shape[1:]) # drop the useless mode dimension
 
 data = np.genfromtxt('../Data/benchmarks_convolution_std.txt', dtype='str')
 data_linear_std = np.array(data[np.where(data[:,0] == 'linear'),1:], dtype=np.float)
@@ -92,6 +97,14 @@ Z_circular_fftw = np.NaN * np.zeros(X.shape)
 for d in data_circular_fftw:
     Z_circular_fftw[d[1]-min_kernel, d[0]-min_src] = d[2]
 
+Z_linear_gsl = np.NaN * np.zeros(X.shape)
+for d in data_linear_gsl:
+    Z_linear_gsl[d[1]-min_kernel, d[0]-min_src] = d[2]
+Z_circular_gsl = np.NaN * np.zeros(X.shape)
+for d in data_circular_gsl:
+    Z_circular_gsl[d[1]-min_kernel, d[0]-min_src] = d[2]
+
+
 Z_linear_std = np.NaN * np.zeros(X.shape)
 for d in data_linear_std:
     Z_linear_std[d[1]-min_kernel, d[0]-min_src] = d[2]
@@ -107,9 +120,9 @@ for d in data_circular_octave:
     Z_circular_octave[d[1]-min_kernel, d[0]-min_src] = d[2]
 
 
-Z_names = ['fftw', 'std', 'octave']
-Z_linear = [Z_linear_fftw, Z_linear_std, Z_linear_octave]
-Z_circular = [Z_circular_fftw, Z_circular_std, Z_circular_octave]
+Z_names = ['fftw', 'gsl', 'std', 'octave']
+Z_linear = [Z_linear_fftw, Z_linear_gsl, Z_linear_std, Z_linear_octave]
+Z_circular = [Z_circular_fftw, Z_circular_gsl, Z_circular_std, Z_circular_octave]
 
 ###################################################################
 # Plot the ratio of linear convolutions

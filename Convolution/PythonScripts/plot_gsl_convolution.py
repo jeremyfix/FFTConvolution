@@ -13,8 +13,8 @@ data_linear_unpadded = np.array(data[np.where(data[:,0] == 'linear_unpadded'),1:
 data_linear_unpadded = data_linear_unpadded.reshape(data_linear_unpadded.shape[1:]) # drop the useless mode dimension
 data_circular = np.array(data[np.where(data[:,0] == 'circular'),1:], dtype=np.float)
 data_circular = data_circular.reshape(data_circular.shape[1:]) # drop the useless mode dimension
-data_circular_padded = np.array(data[np.where(data[:,0] == 'circular_padded'),1:], dtype=np.float)
-data_circular_padded = data_circular_padded.reshape(data_circular_padded.shape[1:]) # drop the useless mode dimension
+data_circular_unpadded = np.array(data[np.where(data[:,0] == 'circular_unpadded'),1:], dtype=np.float)
+data_circular_unpadded = data_circular_unpadded.reshape(data_circular_unpadded.shape[1:]) # drop the useless mode dimension
 
 min_src = data_linear[:,0].min()
 max_src = data_linear[:,0].max()
@@ -31,11 +31,11 @@ for d in data_linear_unpadded:
     Z_linear_unpadded[d[1]-min_kernel, d[0]-min_src] = d[2]
 
 Z_circular = np.NaN * np.zeros(X.shape)
-Z_circular_padded = np.NaN * np.zeros(X.shape)
+Z_circular_unpadded = np.NaN * np.zeros(X.shape)
 for d in data_circular:
     Z_circular[d[1]-min_kernel, d[0]-min_src] = d[2]
-for d in data_circular_padded:
-    Z_circular_padded[d[1]-min_kernel, d[0]-min_src] = d[2]
+for d in data_circular_unpadded:
+    Z_circular_unpadded[d[1]-min_kernel, d[0]-min_src] = d[2]
 
 fig =plt.figure(figsize=(15,5))
 ax = fig.add_subplot(121, projection='3d')
@@ -48,7 +48,7 @@ ax.set_title('Linear convolution of a source NxN with a kernel kxk')
 
 ax = fig.add_subplot(122, projection='3d')
 ax.plot_wireframe(X, Y, Z_circular, color='b', alpha=0.4)
-ax.plot_wireframe(X, Y, Z_circular_padded, color='r')
+ax.plot_wireframe(X, Y, Z_circular_unpadded, color='r')
 ax.set_xlabel('Source size (N)')
 ax.set_ylabel('Kernel size (k)')
 ax.set_zlabel('Time (s.)')
