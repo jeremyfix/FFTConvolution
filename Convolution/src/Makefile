@@ -7,20 +7,20 @@ BINS_BENCHMARKS=\
 	convolution_fftw_benchmark_linear.bin\
 	convolution_fftw_benchmark_linear_unpadded.bin\
 	convolution_fftw_benchmark_circular.bin\
-	convolution_fftw_benchmark_circular_padded.bin\
-	convolution_octave_benchmark_linear.bin\
-	convolution_octave_benchmark_circular.bin\
-	convolution_std_benchmark_linear.bin\
-	convolution_std_benchmark_circular.bin
+	convolution_fftw_benchmark_circular_unpadded.bin
+# convolution_octave_benchmark_linear.bin\
+# convolution_octave_benchmark_circular.bin\
+# convolution_std_benchmark_linear.bin\
+# convolution_std_benchmark_circular.bin
 # convolution_gsl_benchmark_linear.bin\
 # convolution_gsl_benchmark_linear_optimal.bin\
 # convolution_gsl_benchmark_circular.bin\
 # convolution_gsl_benchmark_circular_optimal.bin\
 
-BINS_BENCHMARKS_SCRIPTS=\
-	run_fftw_bench.sh \
-	run_std_bench.sh \
-	run_octave_bench.sh
+BINS_BENCHMARKS_SCRIPTS=
+#	run_fftw_bench.sh 
+#	run_std_bench.sh \
+#	run_octave_bench.sh
 #	run_gsl_bench.sh \
 
 MAX_SIZE_BENCHMARK= 100
@@ -73,7 +73,7 @@ convolution_fftw_benchmark_circular.bin: convolution_benchmark.cc
 	make convolution_bin CONVOLUTION=0 MODE=1 TARGET=$@ CFLAGSLIBS="`pkg-config --libs --cflags fftw3`"
 convolution_fftw_benchmark_linear_unpadded.bin: convolution_benchmark.cc
 	make convolution_bin CONVOLUTION=0 MODE=2 TARGET=$@ CFLAGSLIBS="`pkg-config --libs --cflags fftw3`" 
-convolution_fftw_benchmark_circular_padded.bin: convolution_benchmark.cc
+convolution_fftw_benchmark_circular_unpadded.bin: convolution_benchmark.cc
 	make convolution_bin CONVOLUTION=0 MODE=3 TARGET=$@ CFLAGSLIBS="`pkg-config --libs --cflags fftw3`"
 
 
@@ -83,7 +83,7 @@ convolution_gsl_benchmark_circular.bin: convolution_benchmark.cc
 	make convolution_bin CONVOLUTION=1 MODE=1 TARGET=$@ CFLAGSLIBS="`pkg-config --libs --cflags gsl`"
 convolution_gsl_benchmark_linear_unpadded.bin: convolution_benchmark.cc
 	make convolution_bin CONVOLUTION=1 MODE=2 TARGET=$@ CFLAGSLIBS="`pkg-config --libs --cflags gsl`" 
-convolution_gsl_benchmark_circular_padded.bin: convolution_benchmark.cc
+convolution_gsl_benchmark_circular_unpadded.bin: convolution_benchmark.cc
 	make convolution_bin CONVOLUTION=1 MODE=3 TARGET=$@ CFLAGSLIBS="`pkg-config --libs --cflags gsl` "
 
 

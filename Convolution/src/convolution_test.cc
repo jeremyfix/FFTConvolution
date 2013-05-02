@@ -135,6 +135,9 @@ bool bench_and_compare(Workspace &ws, int h_src, int w_src, int h_kernel, int w_
       break;
 #endif      
     case CIRCULAR_FULL:
+#if DO_PADDED_UNPADDED_TESTS
+    case CIRCULAR_FULL_UNPADDED:
+#endif
       // perform the convolution with Octave
       functionArguments (0) = src_mat;
       functionArguments (1) = kernel_mat;
@@ -152,6 +155,9 @@ bool bench_and_compare(Workspace &ws, int h_src, int w_src, int h_kernel, int w_
       dst_octave = result(0).matrix_value ();
       break;
     case CIRCULAR_SAME:
+#if DO_PADDED_UNPADDED_TESTS
+    case CIRCULAR_SAME_PADDED: 
+#endif   
       // perform the convolution with Octave
       functionArguments (0) = src_mat;
       functionArguments (1) = kernel_mat;
@@ -174,7 +180,25 @@ bool bench_and_compare(Workspace &ws, int h_src, int w_src, int h_kernel, int w_
 	  dst_octave(i,j) = tmp_matrix(i,j);
 
       break;
+      /*
 #if DO_PADDED_UNPADDED_TESTS
+    case CIRCULAR_FULL_PADDED:
+      // perform the convolution with Octave
+      functionArguments (0) = src_mat;
+      functionArguments (1) = kernel_mat;
+      if(h_src == 1 || w_src == 1)
+	{
+	  result = feval ("fftconv", functionArguments, 1);
+	  logfile << "dst = fftconv(src, kernel);" << std::endl;
+	}
+      else
+	{
+	  result = feval ("fftconv2", functionArguments, 1);
+	  logfile << "dst = fftconv2(src, kernel);" << std::endl;
+	}
+
+      dst_octave = result(0).matrix_value ();
+      break;
     case CIRCULAR_SAME_PADDED:    
       // perform the convolution with Octave
       functionArguments (0) = src_mat;
@@ -198,6 +222,7 @@ bool bench_and_compare(Workspace &ws, int h_src, int w_src, int h_kernel, int w_
 	  dst_octave(i,j) = tmp_matrix(i,j);
       break;
 #endif 
+      */
     default:
       print_error("Unrecognized convolution mode");
       std::cout << "Mode : " << mode << std::endl;
@@ -499,7 +524,7 @@ int main(int argc, char * argv[])
 
 
   int nb_success_full, nb_success_valid, nb_success_same, nb_success_same_unpadded;
-  int nb_success_circular_full;
+  int nb_success_circular_full, nb_success_circular_full_unpadded;
 
   for(unsigned int i = 0 ; i < category_sizes.size() ; ++i)
     {
@@ -507,7 +532,7 @@ int main(int argc, char * argv[])
       std::string label_category = category_labels[i];
       std::cout << "Test for category " << label_category << std::endl;
       nb_success_full = nb_success_valid = nb_success_same = nb_success_same_unpadded =0;
-      nb_success_circular_full = 0;
+      nb_success_circular_full = nb_success_circular_full_unpadded = 0;
 
       for(unsigned int j = 0 ; j < category_sizes[i].size() ; ++j)
 	{
@@ -555,13 +580,14 @@ int main(int argc, char * argv[])
 	  nb_success_full += bench_and_compare(ws, h_src, w_src, h_kernel, w_kernel, src, kernel, LINEAR_FULL, src_mat, kernel_mat, logfile);
 	  nb_success_same += bench_and_compare(ws, h_src, w_src, h_kernel, w_kernel, src, kernel, LINEAR_SAME, src_mat, kernel_mat, logfile);
 	  nb_success_valid += bench_and_compare(ws, h_src, w_src, h_kernel, w_kernel, src, kernel, LINEAR_VALID, src_mat, kernel_mat, logfile);
+	  nb_success_circular_full += bench_and_compare(ws, h_src, w_src, h_kernel, w_kernel, src, kernel, CIRCULAR_FULL, src_mat, kernel_mat, logfile);
 
 #if DO_PADDED_UNPADDED_TESTS
 	  // Theses tests should be done only with fftw and gsl, not std
 	  nb_success_same_unpadded += bench_and_compare(ws, h_src, w_src, h_kernel, w_kernel, src, kernel, LINEAR_SAME_UNPADDED, src_mat, kernel_mat, logfile);
+	  nb_success_circular_full_unpadded += bench_and_compare(ws, h_src, w_src, h_kernel, w_kernel, src, kernel, CIRCULAR_FULL_UNPADDED, src_mat, kernel_mat, logfile);
 #endif
 
-	  nb_success_circular_full += bench_and_compare(ws, h_src, w_src, h_kernel, w_kernel, src, kernel, CIRCULAR_FULL, src_mat, kernel_mat, logfile);
 
 	  // A matlab script is created for checking the results
 	  // of the modulor N circular convolutions
@@ -576,11 +602,12 @@ int main(int argc, char * argv[])
       print_results("linear full", nb_success_full, NB_CONVOLUTIONS_PER_CATEGORY);
       print_results("linear_same", nb_success_same, NB_CONVOLUTIONS_PER_CATEGORY);
       print_results("linear valid", nb_success_valid, NB_CONVOLUTIONS_PER_CATEGORY);
+      print_results("circular full", nb_success_circular_full, NB_CONVOLUTIONS_PER_CATEGORY);
 
 #if DO_PADDED_UNPADDED_TESTS
       print_results("linear same unpadded" , nb_success_same_unpadded, NB_CONVOLUTIONS_PER_CATEGORY);
+      print_results("circular full unpadded" , nb_success_circular_full_unpadded, NB_CONVOLUTIONS_PER_CATEGORY);
 #endif
-      print_results("circular full", nb_success_circular_full, NB_CONVOLUTIONS_PER_CATEGORY);
     }
 
   std::cout << std::setfill('-') << std::setw(50) << '-' << std::endl;

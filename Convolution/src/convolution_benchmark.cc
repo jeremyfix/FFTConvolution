@@ -73,25 +73,25 @@ using namespace STD_Convolution;
 
 #elif MODE==1
 #define MODE_STR "circular"
-#define CONVOLUTION_MODE CIRCULAR_SAME
+#define CONVOLUTION_MODE CIRCULAR_FULL
 
 #elif MODE==2
 #define MODE_STR "linear_unpadded"
 #define CONVOLUTION_MODE LINEAR_SAME_UNPADDED
 #if CONVOLUTION==2
-#error There is no linear_optimal convolution for std_convolution .. it is just linear
+#error There is no linear_unpadded convolution for std_convolution .. it is just linear
 #elif CONVOLUTION==3
-#error There is no linear_optimal convolution for octave_convolution .. it is just linear
+#error There is no linear_unpadded convolution for octave_convolution .. it is just linear
 #endif
 
 
 #elif MODE==3
-#define MODE_STR "circular_padded"
-#define CONVOLUTION_MODE CIRCULAR_SAME_PADDED
+#define MODE_STR "circular_unpadded"
+#define CONVOLUTION_MODE CIRCULAR_FULL_UNPADDED
 #if CONVOLUTION==2
-#error There is no circular_optimal convolution for std_convolution .. it is just circular
+#error There is no circular_unpadded convolution for std_convolution .. it is just circular
 #elif CONVOLUTION==3
-#error There is no circular_optimal convolution for octave_convolution .. it is just linear
+#error There is no circular_unpadded convolution for octave_convolution .. it is just circular
 #endif
 
 #endif
