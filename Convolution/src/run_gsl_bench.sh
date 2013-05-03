@@ -39,7 +39,7 @@ for i in $(seq 3 $MAX_SIZE)
 do
     for j in $(seq 3 $(($i-1)))
     do
-	./convolution_gsl_benchmark_circular_padded.bin $i $j > /dev/null
+	./convolution_gsl_benchmark_circular_unpadded.bin $i $j > /dev/null
     done
 done
 

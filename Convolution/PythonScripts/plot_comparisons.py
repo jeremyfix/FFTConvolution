@@ -148,11 +148,32 @@ for i, zi in enumerate(Z_linear):
                        **plotkwargs)
         im.set_clim([0,10])
         cb = ax.figure.colorbar(im, ax=ax)
-        ax.set_title('Ratio %s/%s' % (Z_names[i],Z_names[j]))
+        if(not i):
+            ax.set_title('%s' % Z_names[j])
+        if(not j):
+            ax.set_ylabel('%s' % Z_names[i])
+        else:
+            ax.set_ylabel('Kernel size')
         ax.set_xlabel('Source size')
-        ax.set_ylabel('Kernel size')
 
 plt.savefig('comparison_linear.png', bbox_inches='tight')
+
+fig = plt.figure(figsize=(10,10), facecolor='w')
+fig.subplots_adjust(left=.05,bottom=.11,right=.94,top=.83,wspace=.35)
+for i, zi in enumerate(Z_linear):
+    for j, zj in enumerate(Z_linear):
+        # Compute the ratio zi / zj
+        z_ratio = zi / zj
+        ax = fig.add_subplot(len(Z_linear),len(Z_linear),i*len(Z_linear) + j + 1)
+        ax.plot(z_ratio.flatten())
+        if(not i):
+            ax.set_title('%s' % Z_names[j])
+        if(not j):
+            ax.set_ylabel('%s' % Z_names[i])
+        else:
+            ax.set_ylabel('Kernel size')
+        ax.set_xlabel('Source size')
+
 
 ###################################################################
 # Plot the ratio of circular convolutions
@@ -173,16 +194,34 @@ for i, zi in enumerate(Z_circular):
         # Compute the ratio zi / zj
         z_ratio = zi / zj
         ax = fig.add_subplot(len(Z_circular),len(Z_circular),i*len(Z_circular) + j + 1)
-        #ax = axs[i][j]
         im = ax.imshow(z_ratio,
                        cmap=cmap_center_point_adjust(cmap,[0, 10],1.0),
                        **plotkwargs)
         im.set_clim([0,10])
         cb = ax.figure.colorbar(im, ax=ax)
-        ax.set_title('Ratio %s/%s' % (Z_names[i],Z_names[j]))
+        if(not i):
+            ax.set_title('%s' % Z_names[j])
+        if(not j):
+            ax.set_ylabel('%s' % Z_names[i])
+        else:
+            ax.set_ylabel('Kernel size')
         ax.set_xlabel('Source size')
-        ax.set_ylabel('Kernel size')
-
 plt.savefig('comparison_circular.png', bbox_inches='tight')
+
+fig = plt.figure(figsize=(10,10), facecolor='w')
+fig.subplots_adjust(left=.05,bottom=.11,right=.94,top=.83,wspace=.35)
+for i, zi in enumerate(Z_circular):
+    for j, zj in enumerate(Z_circular):
+        # Compute the ratio zi / zj
+        z_ratio = zi / zj
+        ax = fig.add_subplot(len(Z_circular),len(Z_circular),i*len(Z_circular) + j + 1)
+        ax.plot(z_ratio.flatten())
+        if(not i):
+            ax.set_title('%s' % Z_names[j])
+        if(not j):
+            ax.set_ylabel('%s' % Z_names[i])
+        else:
+            ax.set_ylabel('Kernel size')
+        ax.set_xlabel('Source size')
 
 plt.show()
