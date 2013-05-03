@@ -27,6 +27,9 @@ Each of the script has a line at the beginning giving the compilation line. You 
 
 The benchmarks are performed for 2D convolutions with source and kernel of sizes up to 100 x 100 ; The tests are performed by generating 50 random sources and kernels in various conditions (1D convolutions with odd/even source and kernel, and 2D convolutions) and comparing the result of the convolution against octave with a tolerance of 1e-12.
 
+
+If you want to use the codes, you just need to include the file Convolution/src/convolution_fftw.h for using the FFTW (it is actually the fastest implementationif you use kernel of sizes larger than 10 x 10; otherwise nested for loops is fine).
+
 Results
 -------
 
