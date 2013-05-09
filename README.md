@@ -61,3 +61,5 @@ Here, it is clear that using the FFTW is much faster, whatever the kernel size. 
 - between 1.5 and 300 times faster than the implementation with Octave
 
 Interestingly, against Octave, the speedup of the implementation with FFTW tends to decrease as the source/kernel sizes increase.
+
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/e44c4ca62c09e456ee28cf1f3c4eb218 "githalytics.com")](http://githalytics.com/jeremyfix/FFTConvolution)
